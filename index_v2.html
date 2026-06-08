@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClarityTool — See through the noise.</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue: #1a47ff; --blue-dim: rgba(26,71,255,0.08); --blue-border: rgba(26,71,255,0.22);
+    --black: #0a0a0a; --white: #f5f5f0; --card: #141414; --border: #1e1e1e; --border-mid: #252525;
+  }
+  body { background: var(--black); color: var(--white); font-family: 'Archivo', sans-serif; font-weight: 300; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(26,71,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(26,71,255,0.025) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; z-index: 0; }
+  header { padding: 1.4rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,10,10,0.97); backdrop-filter: blur(16px); z-index: 100; }
+  .logo { font-family: 'Archivo Black', sans-serif; font-size: 1.25rem; letter-spacing: 0.18em; color: var(--white); text-decoration: none; }
+  .logo span { color: var(--blue); }
+  .header-right { display: flex; align-items: center; gap: 1.5rem; }
+  .tagline-header { font-size: 0.65rem; letter-spacing: 0.22em; color: #383838; text-transform: uppercase; }
+  .db-badge { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue); border: 1px solid var(--blue-border); padding: 0.22rem 0.55rem; font-family: 'Archivo Black', sans-serif; }
+  .hero { padding: 4.5rem 2.5rem 3rem; max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+  .hero-label { font-size: 0.62rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--blue); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; }
+  .hero-label::before { content: ''; display: inline-block; width: 20px; height: 1px; background: var(--blue); }
+  .hero h1 { font-family: 'Archivo Black', sans-serif; font-size: clamp(2.2rem, 5vw, 4.2rem); line-height: 1.06; margin-bottom: 1.5rem; }
+  .hero h1 em { color: var(--blue); font-style: normal; }
+  .hero-sub { font-size: 0.95rem; line-height: 1.78; color: #666; max-width: 500px; }
+  .hero-sub strong { color: #999; font-weight: 400; }
+  .main { max-width: 900px; margin: 0 auto; padding: 1.5rem 2.5rem 6rem; position: relative; z-index: 1; }
+  .divider { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.9rem; }
+  .divider span { font-size: 0.58rem; letter-spacing: 0.28em; text-transform: uppercase; color: #2e2e2e; white-space: nowrap; }
+  .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .input-box { border: 1px solid var(--border-mid); background: var(--card); margin-bottom: 1rem; transition: border-color 0.2s; }
+  .input-box:focus-within { border-color: var(--blue); }
+  textarea { width: 100%; background: transparent; border: none; color: var(--white); font-family: 'Archivo', sans-serif; font-size: 0.95rem; font-weight: 300; line-height: 1.65; padding: 1.25rem 1.5rem; resize: none; min-height: 130px; outline: none; }
+  textarea::placeholder { color: #2e2e2e; }
+  .input-foot { padding: 0.5rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.65rem; color: #2e2e2e; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.75rem; }
+  .chip { font-size: 0.68rem; padding: 0.3rem 0.72rem; border: 1px solid var(--border-mid); color: #4a4a4a; cursor: pointer; transition: all 0.15s; font-family: 'Archivo', sans-serif; background: transparent; }
+  .chip:hover, .chip.active { border-color: var(--blue); color: var(--white); background: var(--blue-dim); }
+  .analyze-btn { width: 100%; padding: 1rem 2rem; background: var(--blue); color: var(--white); border: none; font-family: 'Archivo Black', sans-serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; margin-bottom: 2.5rem; }
+  .analyze-btn:hover { background: #0030ee; }
+  .analyze-btn:disabled { background: #111; color: #2a2a2a; cursor: not-allowed; }
+  .loading { display: none; margin-bottom: 2rem; }
+  .loading.active { display: block; }
+  .loading-bar { height: 1px; background: var(--border); overflow: hidden; position: relative; margin-bottom: 1rem; }
+  .loading-bar::after { content: ''; position: absolute; left: -40%; width: 40%; height: 100%; background: var(--blue); animation: sweep 1s ease-in-out infinite; }
+  @keyframes sweep { 0% { left: -40%; } 100% { left: 100%; } }
+  .loading-text { font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase; color: #2e2e2e; text-align: center; }
+  .results { display: none; animation: fadeUp 0.35s ease; }
+  .results.active { display: block; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  .results-title { font-size: 0.58rem; letter-spacing: 0.28em; text-transform: uppercase; color: #2e2e2e; }
+  .reset-btn { background: transparent; border: 1px solid var(--border-mid); color: #3a3a3a; font-family: 'Archivo', sans-serif; font-size: 0.68rem; padding: 0.35rem 0.8rem; cursor: pointer; transition: all 0.15s; }
+  .reset-btn:hover { border-color: #555; color: var(--white); }
+  .score-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1.25rem; padding: 1.25rem 1.5rem; border: 1px solid var(--border-mid); background: var(--card); margin-bottom: 1.5rem; }
+  .score-num { font-family: 'Archivo Black', sans-serif; font-size: 3.2rem; line-height: 1; }
+  .score-meta { display: flex; flex-direction: column; gap: 0.45rem; }
+  .score-lbl { font-size: 0.57rem; letter-spacing: 0.22em; text-transform: uppercase; color: #2a2a2a; }
+  .score-track { height: 2px; background: var(--border); position: relative; }
+  .score-fill { position: absolute; left: 0; top: 0; height: 100%; transition: width 0.9s cubic-bezier(0.23,1,0.32,1); }
+  .score-desc { font-size: 0.75rem; color: #3a3a3a; font-style: italic; max-width: 140px; line-height: 1.45; text-align: right; }
+  .summary { border-left: 2px solid var(--blue); padding: 1.1rem 1.25rem; background: var(--blue-dim); margin-bottom: 2rem; font-size: 0.9rem; line-height: 1.78; color: #777; }
+  .tech-label { font-size: 0.58rem; letter-spacing: 0.28em; text-transform: uppercase; color: #252525; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.75rem; }
+  .tech-label::after { content: ''; flex: 1; height: 1px; background: #181818; }
+  .tcard { border: 1px solid var(--border-mid); background: var(--card); margin-bottom: 0.6rem; overflow: hidden; animation: slideIn 0.3s ease both; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
+  .tcard-head { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1.25rem; border-bottom: 1px solid var(--border); }
+  .tcard-left { display: flex; align-items: center; gap: 0.7rem; }
+  .tcard-num { font-size: 0.57rem; color: var(--blue); font-family: 'Archivo Black', sans-serif; letter-spacing: 0.08em; min-width: 24px; }
+  .tcard-name { font-family: 'Archivo Black', sans-serif; font-size: 0.85rem; }
+  .tcard-goal { font-size: 0.57rem; letter-spacing: 0.12em; font-family: 'Archivo Black', sans-serif; padding: 0.17rem 0.42rem; border-width: 1px; border-style: solid; }
+  .tcard-body { padding: 0.9rem 1.25rem; }
+  .tcard-exp { font-size: 0.83rem; line-height: 1.72; color: #666; margin-bottom: 0.7rem; }
+  .tcard-clarity { background: rgba(26,71,255,0.06); border-left: 2px solid var(--blue); padding: 0.7rem 0.9rem; font-size: 0.78rem; line-height: 1.62; color: #7a9fff; font-style: italic; margin-bottom: 0.6rem; }
+  .tcard-trigger { font-size: 0.7rem; color: #2a2a2a; padding-top: 0.55rem; border-top: 1px solid var(--border); }
+  .tcard-trigger strong { color: #383838; font-weight: 500; }
+  .disclaimer { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); font-size: 0.62rem; color: #222; line-height: 1.7; text-align: center; }
+  .site-footer { margin-top: 3.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+  .footer-brand { font-family: 'Archivo Black', sans-serif; font-size: 0.65rem; letter-spacing: 0.18em; color: #1e1e1e; }
+  .footer-right { font-size: 0.65rem; color: #282828; }
+  .footer-right a { color: var(--blue); text-decoration: none; }
+  @media (max-width: 600px) {
+    header, .hero, .main { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .hero { padding-top: 2.5rem; } .hero h1 { font-size: 2rem; }
+    .score-row { grid-template-columns: auto 1fr; } .score-desc { display: none; } .tagline-header { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="#">CLARITY<span>TOOL</span></a>
+  <div class="header-right">
+    <span class="tagline-header">See through the noise.</span>
+    <span class="db-badge">90 Techniques</span>
+  </div>
+</header>
+<div class="hero">
+  <div class="hero-label">Concept Demo · June 2026 · Prototype logic, not automated assessment</div>
+  <h1>What is this content<br>trying to <em>do</em> to you?</h1>
+  <p class="hero-sub">Paste any headline, newsletter, political speech, or ad copy.<br><strong>Not "is this fake?" — but "how is this trying to influence me, and why does it work?"</strong></p>
+</div>
+<div class="main">
+  <div class="divider"><span>Input</span></div>
+  <div class="input-box">
+    <textarea id="inputText" placeholder="Paste a headline, email, political statement, or ad copy here...&#10;&#10;Or try one of the examples below." maxlength="2000"></textarea>
+    <div class="input-foot" id="charCount">0 / 2000</div>
+  </div>
+  <div class="divider"><span>Try an example</span></div>
+  <div class="chips">
+    <button class="chip" onclick="setExample(0)">LAST CHANCE email</button>
+    <button class="chip" onclick="setExample(1)">Political fear headline</button>
+    <button class="chip" onclick="setExample(2)">Wellness propaganda</button>
+    <button class="chip" onclick="setExample(3)">Corporate euphemism</button>
+    <button class="chip" onclick="setExample(4)">Migration scapegoating</button>
+    <button class="chip" onclick="setExample(5)">Social media outrage</button>
+    <button class="chip" onclick="setExample(6)">Honest appeal ↓</button>
+  </div>
+  <button class="analyze-btn" id="analyzeBtn" onclick="analyze()" disabled>Analyze this content</button>
+  <div class="loading" id="loading">
+    <div class="loading-bar"></div>
+    <div class="loading-text">Identifying psychological mechanisms...</div>
+  </div>
+  <div class="results" id="results">
+    <div class="results-header">
+      <span class="results-title">Influence pattern detected</span>
+      <button class="reset-btn" onclick="resetAll()">&#8635; New analysis</button>
+    </div>
+    <div class="score-row">
+      <div class="score-num" id="scoreNum">-</div>
+      <div class="score-meta">
+        <div class="score-lbl">Manipulation Score / 10</div>
+        <div class="score-track"><div class="score-fill" id="scoreFill"></div></div>
+        <div class="score-lbl" id="scoreTier"></div>
+      </div>
+      <div class="score-desc" id="scoreDesc"></div>
+    </div>
+    <div style="font-size:0.6rem;color:#2a2a2a;margin-bottom:1.5rem;line-height:1.6;padding:0.6rem 0.75rem;border:1px solid #1a1a1a;">
+      Score reflects: pressure intensity · emotional loading · unverifiable claims · action urgency · technique combination — not truth or falsity.
+    </div>
+    <div class="summary" id="summaryEl"></div>
+    <div class="tech-label">Techniques detected</div>
+    <div id="techList"></div>
+    <div class="disclaimer">ClarityTool names mechanisms — it never judges whether content is true or false. The user decides.<br>Database based on Bernays (1923), Cialdini, peer-reviewed research, and PSYOP doctrine.</div>
+  </div>
+  <div class="site-footer">
+    <span class="footer-brand">CLARITYTOOL — CONCEPT DEMO 2026</span>
+    <span class="footer-right">UNRLD. Studio &middot; <a href="mailto:joey@unrld.de">joey@unrld.de</a></span>
+  </div>
+</div>
+<script>
+const examples=[
+"LAST CHANCE — Only 3 spots remaining. Don't miss out. Everyone is already signing up. Act now before it's too late.",
+"Migrants are flooding our borders. Our children are no longer safe. Only we can stop this — the others won't.",
+"Imagine how much propaganda it took to convince us that processed food, screens 24/7 and chronic stress is just normal. Nature. Silence. Real food. That's what humans were made for. Wake up.",
+"Following a strategic realignment process, we have made the difficult decision to right-size our workforce by approximately 15%. These measures are necessary to ensure long-term value creation for all stakeholders.",
+"While hardworking citizens struggle to find housing, thousands of migrants are given free apartments. Something is deeply wrong with our priorities. Share if you agree.",
+"This is the most important video you'll ever watch. The media won't show you this. They don't want you to know. Share before it gets deleted.",
+"Last year, 847 families received emergency housing support through our program. This year, we're aiming for 1,200. Here's how."
+];
+const analyses=[
+{score:9,summary:"This text combines four high-intensity behavioral and emotional pressure techniques in a single short message. The reader is given no time to think — every sentence adds another layer of urgency, scarcity, or social validation. This is a textbook example of conversion-optimized manipulation.",techniques:[
+{id:"#13",name:"Urgency Inflation",goal:"EMO\u2192ACT",explanation:"\"Act now before it's too late\" creates a manufactured deadline. No actual time constraint exists — the urgency is artificially imposed to prevent deliberate decision-making.",signal:"Activates the loss-aversion system: the pain of missing out outweighs the perceived benefit of waiting.",clarity:"This message creates a sense of urgency that may not reflect reality. The deadline appears artificial."},
+{id:"#82",name:"Scarcity",goal:"ACT",explanation:"\"Only 3 spots remaining\" implies that demand is high and supply is nearly gone — even when this cannot be verified. The scarcity may be real or fabricated.",signal:"Triggers the survival instinct: limited resources must be secured before others take them.",clarity:"The claim of limited availability cannot be verified. Scarcity is one of the most commonly fabricated pressure tactics."},
+{id:"#44",name:"Social Proof Manipulation",goal:"ACT",explanation:"\"Everyone is already signing up\" presents an unverifiable social consensus to make non-participation feel like the wrong choice.",signal:"Exploits the herd mechanism: if everyone else is doing it, it must be correct and safe.",clarity:"\"Everyone is signing up\" is a social proof claim. The actual number of participants is unknown."},
+{id:"#86",name:"Foot-in-the-Door",goal:"ACT",explanation:"The message builds a yes-pattern by stacking small affirmations before arriving at the actual ask — a classic low-threshold entry technique.",signal:"Activates the consistency bias: once you've agreed to small steps, refusing the main request feels inconsistent.",clarity:"The message is structured to build momentum toward a single action before you've evaluated whether you want it."}
+]},
+{score:9,summary:"This text layers fear, ingroup identity, and a false dilemma to push the reader toward a single political conclusion. It presents a complex social reality as an emergency with one solution — and defines anyone who disagrees as part of the threat.",techniques:[
+{id:"#1",name:"Fear Appeal",goal:"EMO\u2192ACT",explanation:"\"Our children are no longer safe\" is a direct appeal to the most primal protective instinct. It frames the situation as an immediate personal threat to the reader's family.",signal:"Activates the threat-response system, bypassing analytical thinking in favor of protective action.",clarity:"This statement frames child safety as an immediate threat linked to migration. The causal connection is asserted, not demonstrated."},
+{id:"#42",name:"Ingroup/Outgroup",goal:"ID",explanation:"\"Only we can stop this — the others won't\" establishes a clear boundary between a protective ingroup and a negligent outgroup.",signal:"Exploits the tribal identity mechanism: belonging to the right group becomes more important than evaluating the claim.",clarity:"The phrase \"only we\" activates group identity. It positions disagreement as betrayal of the group."},
+{id:"#18",name:"False Dilemma",goal:"BEL\u2192ACT",explanation:"The text presents a binary: either support this political force, or the children will remain unsafe. All other positions are erased.",signal:"Eliminates cognitive complexity: two options are easier to process than many, even when many exist.",clarity:"The text implies only one political response can address the issue. This eliminates a wide range of alternative positions."},
+{id:"#2",name:"Fear Framing",goal:"EMO\u2192ACT",explanation:"The word \"flooding\" frames migration as a natural disaster — an overwhelming, uncontrollable force — rather than a policy issue with multiple dimensions.",signal:"Loaded metaphors activate emotional rather than analytical processing.",clarity:"The word \"flooding\" is a framing choice. It shapes the emotional meaning before any facts are presented."}
+]},
+{score:6,summary:"This text uses nostalgic framing and a manufactured awakening narrative to position the reader as someone who has been deceived by mainstream society. While it contains some valid observations, it presents them as hidden truths and encourages distrust of established norms.",techniques:[
+{id:"#8",name:"Nostalgia Weaponization",goal:"EMO\u2192BEL",explanation:"\"Real food\", \"nature\", and \"silence\" are positioned as the authentic human baseline — implying that modern life is a deviation from something better that once existed.",signal:"Activates nostalgic longing for an idealized past that may never have existed as described.",clarity:"This message contrasts modern life with a natural ideal. The implied past is an idealization, not a documented historical condition."},
+{id:"#50",name:"Norm Engineering",goal:"BEL",explanation:"By labeling modern behaviors as the result of \"propaganda\", the text frames normal life as a manufactured deception — positioning the reader as awakening from it.",signal:"Activates the desire to escape manipulation — by following a different narrative that may itself be manipulative.",clarity:"The framing of everyday life as \"propaganda\" is itself a framing technique. It positions the author as the source of authentic truth."},
+{id:"#24",name:"Illusory Truth Effect",goal:"BEL",explanation:"The phrase \"Wake up\" is a common pattern in wellness and conspiracy-adjacent content. Repeated exposure to this structure creates a sense of hidden truth being revealed.",signal:"Familiarity creates the feeling of truth — even without evidence.",clarity:"\"Wake up\" is a rhetorical device that implies the reader has been deceived. It asserts hidden truth without providing it."}
+]},
+{score:5,summary:"This text uses carefully chosen language to describe a mass layoff in terms that minimize human impact and distribute responsibility. The techniques are subtle but systematic — this is professional-grade manipulation designed to protect institutional reputation.",techniques:[
+{id:"#56",name:"Euphemism",goal:"BEL",explanation:"\"Right-size\" and \"strategic realignment\" replace the word \"layoff\". The chosen language softens a significant negative event by making it sound like a deliberate, rational optimization.",signal:"Abstractions reduce emotional impact — making harmful decisions harder to recognize and evaluate.",clarity:"\"Right-sizing the workforce\" means laying off employees. The language is chosen to minimize the perceived severity."},
+{id:"#61",name:"Passive Voice Obfuscation",goal:"BEL",explanation:"\"We have made the difficult decision\" positions this as an impersonal process. No individual is responsible. The passive construction distributes accountability across an unnamed collective.",signal:"Removes identifiable decision-makers, making it harder to assign or demand accountability.",clarity:"The passive framing makes the layoff appear as a consequence of circumstances rather than a choice made by specific people."},
+{id:"#67",name:"Spin",goal:"BEL",explanation:"\"Long-term value creation for all stakeholders\" reframes a cost-cutting measure as a broadly beneficial action. The framing serves institutional interests while appearing to include everyone.",signal:"Positive framing of negative news exploits the tendency to evaluate information based on how it is presented.",clarity:"\"Value creation for stakeholders\" reframes a cost reduction as a collective benefit. This is a standard investor-relations framing technique."}
+]},
+{score:8,summary:"This text targets a specific group to explain a systemic economic problem — housing scarcity — that has multiple structural causes. The emotional frame, unverified claim, and call to share are designed to maximize outrage and virality over accuracy.",techniques:[
+{id:"#46",name:"Scapegoating",goal:"EMO\u2192ACT",explanation:"A complex structural issue (housing shortage) is attributed directly and exclusively to one group. This simplifies a multi-factor problem into a single cause that can be targeted emotionally.",signal:"Activates the need for simple explanations: a visible enemy is psychologically more satisfying than systemic complexity.",clarity:"The text connects housing scarcity directly to migrant housing policy. Housing shortages have multiple structural causes; this text presents one as the primary explanation."},
+{id:"#55",name:"Loaded Language",goal:"EMO\u2192BEL",explanation:"\"Hardworking citizens\" vs. migrants receiving \"free apartments\" — the language encodes a moral hierarchy before any evidence is presented.",signal:"Charged language bypasses analytical evaluation and triggers moral intuitions directly.",clarity:"The contrast between \"hardworking citizens\" and \"free apartments\" is a value judgment embedded in the framing, not a factual description."},
+{id:"#11",name:"Outrage Farming",goal:"EMO\u2192ACT",explanation:"\"Share if you agree\" is designed to trigger social amplification at peak emotional activation — the moment of highest outrage is the moment the reader is asked to spread the message.",signal:"Exploits the social sharing impulse: outrage is the most viral emotional state on social media.",clarity:"The call to share is placed at the point of maximum emotional impact. This is a standard viral amplification technique."},
+{id:"#75",name:"Statistical Manipulation",goal:"BEL",explanation:"\"Thousands of migrants\" given \"free apartments\" is a specific-sounding claim with no source. The specificity creates an impression of factual basis without providing one.",signal:"Numbers without context feel like evidence, even when they cannot be verified.",clarity:"The specific number and claim are presented without a source. Specific-sounding claims carry false authority."}
+]},
+{score:8,summary:"This text is structured as a suppression narrative — the implied message is that something important is being hidden from the reader by powerful forces. Every element is designed to trigger urgency, distrust of institutions, and viral sharing before the reader can evaluate what the content actually contains.",techniques:[
+{id:"#79",name:"Gatekeeper Control",goal:"BEL",explanation:"\"The media won't show you this\" frames mainstream sources as deliberate suppressors of truth — positioning the author as the only trustworthy alternative.",signal:"Activates distrust of established institutions, making the reader more receptive to unverified claims.",clarity:"\"The media won't show you this\" is a framing claim, not a factual one. It positions the author as a trusted insider without evidence of suppression."},
+{id:"#13",name:"Urgency Inflation",goal:"EMO\u2192ACT",explanation:"\"Share before it gets deleted\" creates a manufactured deadline that bypasses deliberate evaluation. The reader is pushed to act immediately before thinking critically.",signal:"Activates loss aversion: the fear of missing a disappearing truth triggers immediate sharing.",clarity:"\"Share before it gets deleted\" creates urgency. Content claiming to be on the verge of suppression is a common pattern in viral misinformation."},
+{id:"#90",name:"Thought-Stopper Label",goal:"SIL",explanation:"By pre-framing skepticism as being part of \"they\" — the forces that don't want you to know — the text neutralizes critical thinking before it can be applied.",signal:"Anyone who doubts the content is implicitly aligned with the suppressing forces, making doubt feel like complicity.",clarity:"The framing makes skepticism feel like complicity. This is a technique that discourages critical evaluation before you've seen the content."},
+{id:"#20",name:"Availability Heuristic Abuse",goal:"BEL",explanation:"\"The most important video you'll ever watch\" uses superlative language to create outsized significance. Repetition of this pattern trains the brain to treat it as meaningful.",signal:"Repetition of hyperbolic claims creates an unconscious association between the format and genuine importance.",clarity:"Superlatives like \"most important ever\" are common in content designed to maximize clicks. The format is itself a signal worth noticing."}
+]},
+{score:2,summary:"This text communicates transparently: a specific, verifiable result is stated, a concrete goal is set, and the reader is invited to learn more rather than pressured to act. The emotional weight is present but proportionate and honest. ClarityTool detects minimal manipulation here.",techniques:[
+{id:"#10",name:"Empathy Hijacking",goal:"EMO\u2192ACT",explanation:"The number \"847 families\" puts a human scale on an abstract issue — this is a legitimate use of concrete data, though it also activates emotional engagement that makes the message more persuasive.",signal:"Specific numbers create a more vivid mental image than abstract statistics, generating empathy and emotional connection.",clarity:"\"847 families\" makes the impact concrete and human. This is transparent communication — the figure is specific and verifiable rather than vague."}
+]}
+];
+const goalColors={"ACT":{text:"#ff6b35",bg:"rgba(255,107,53,0.08)",border:"rgba(255,107,53,0.22)"},"EMO→ACT":{text:"#ff6b35",bg:"rgba(255,107,53,0.08)",border:"rgba(255,107,53,0.22)"},"BEL→ACT":{text:"#4f8fff",bg:"rgba(79,143,255,0.08)",border:"rgba(79,143,255,0.22)"},"BEL":{text:"#4f8fff",bg:"rgba(79,143,255,0.08)",border:"rgba(79,143,255,0.22)"},"EMO→BEL":{text:"#e91e8c",bg:"rgba(233,30,140,0.08)",border:"rgba(233,30,140,0.22)"},"EMO":{text:"#e91e8c",bg:"rgba(233,30,140,0.08)",border:"rgba(233,30,140,0.22)"},"SIL":{text:"#b46fff",bg:"rgba(180,111,255,0.08)",border:"rgba(180,111,255,0.22)"},"ID":{text:"#ffb347",bg:"rgba(255,179,71,0.08)",border:"rgba(255,179,71,0.22)"}};
+const textarea=document.getElementById('inputText'),analyzeBtn=document.getElementById('analyzeBtn');
+let activeExample=-1;
+textarea.addEventListener('input',()=>{
+  const len=textarea.value.length;
+  document.getElementById('charCount').textContent=len+' / 2000';
+  analyzeBtn.disabled=len<10;
+  activeExample=-1;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+});
+function setExample(i){
+  textarea.value=examples[i];
+  document.getElementById('charCount').textContent=examples[i].length+' / 2000';
+  analyzeBtn.disabled=false;
+  activeExample=i;
+  document.querySelectorAll('.chip').forEach((c,idx)=>c.classList.toggle('active',idx===i));
+  document.getElementById('results').classList.remove('active');
+}
+function analyze(){
+  if(analyzeBtn.disabled)return;
+  analyzeBtn.style.display='none';
+  document.getElementById('loading').classList.add('active');
+  document.getElementById('results').classList.remove('active');
+  setTimeout(()=>{
+    document.getElementById('loading').classList.remove('active');
+    const data=activeExample>=0?analyses[activeExample]:getBestMatch(textarea.value);
+    renderResults(data);
+  },1400+Math.random()*700);
+}
+function getBestMatch(text){
+  const l=text.toLowerCase();
+  if(l.includes('last chance')||l.includes('act now')||l.includes('only')||l.includes('spot'))return analyses[0];
+  if(l.includes('border')||l.includes('children')||l.includes('safe')&&l.includes('migr'))return analyses[1];
+  if(l.includes('media')&&(l.includes('delete')||l.includes('share')||l.includes('know')))return analyses[5];
+  if(l.includes('workforce')||l.includes('stakeholder')||l.includes('right-size'))return analyses[3];
+  if(l.includes('natural')||l.includes('wake')||l.includes('propaganda')&&!l.includes('media'))return analyses[2];
+  if(l.includes('housing')||l.includes('migr')||l.includes('citizens'))return analyses[4];
+  return {score:0,summary:"No strong influence pattern detected in this text. The content appears relatively neutral or the pattern is too subtle for this prototype to identify. Try a clearer example or use one of the provided samples.",techniques:[]};
+}
+function renderResults(data){
+  const score=Math.max(0,Math.min(10,data.score));
+  const scoreColor=score===0?'#444':score<=3?'#4caf50':score<=6?'#ff9800':'#f44336';
+  const tierText=score===0?'No strong pattern detected':score<=3?'1\u20133 \xb7 Standard persuasion':score<=6?'4\u20136 \xb7 Moderate manipulation':'7\u201310 \xb7 Heavy manipulation';
+  const tierDesc=score===0?'Content appears relatively neutral.':score<=3?'Common, relatively transparent persuasion.':score<=6?'Multiple techniques combined. Worth noticing.':'Systematic layering of psychological pressure.';
+  document.getElementById('scoreNum').textContent=score===0?'—':score;
+  document.getElementById('scoreNum').style.color=scoreColor;
+  document.getElementById('scoreTier').textContent=tierText;
+  document.getElementById('scoreTier').style.color=scoreColor;
+  document.getElementById('scoreDesc').textContent=tierDesc;
+  setTimeout(()=>{document.getElementById('scoreFill').style.width=(score*10)+'%';document.getElementById('scoreFill').style.background=scoreColor;},80);
+  document.getElementById('summaryEl').textContent=data.summary;
+  const list=document.getElementById('techList');
+  list.innerHTML='';
+  data.techniques.forEach((t,i)=>{
+    const gc=goalColors[t.goal]||{text:'#4f8fff',bg:'rgba(79,143,255,0.08)',border:'rgba(79,143,255,0.22)'};
+    const card=document.createElement('div');
+    card.className='tcard';
+    card.style.animationDelay=(i*0.07)+'s';
+    card.innerHTML=`<div class="tcard-head"><div class="tcard-left"><span class="tcard-num">${t.id}</span><span class="tcard-name">${t.name}</span></div><span class="tcard-goal" style="color:${gc.text};background:${gc.bg};border-color:${gc.border}">${t.goal}</span></div><div class="tcard-body"><div class="tcard-exp">${t.explanation}</div><div class="tcard-clarity">"${t.clarity}"</div><div class="tcard-trigger"><strong>Psychological trigger:</strong> ${t.signal}</div></div>`;
+    list.appendChild(card);
+  });
+  document.getElementById('results').classList.add('active');
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetAll(){
+  textarea.value='';document.getElementById('charCount').textContent='0 / 2000';
+  analyzeBtn.disabled=true;analyzeBtn.style.display='block';
+  document.getElementById('results').classList.remove('active');
+  document.getElementById('scoreFill').style.width='0%';
+  activeExample=-1;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
