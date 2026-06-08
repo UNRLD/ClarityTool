@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClarityTool — See through the noise.</title>
+<meta name="description" content="Real-time manipulation detection. Paste any headline, email, or political statement. ClarityTool identifies which psychological techniques are being used — instantly.">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #1a47ff;
+    --blue-dim: rgba(26,71,255,0.12);
+    --blue-border: rgba(26,71,255,0.25);
+    --black: #0a0a0a;
+    --white: #f5f5f0;
+    --grey: #888;
+    --light: #e8e8e3;
+    --card: #141414;
+    --border: #1e1e1e;
+    --border-mid: #2a2a2a;
+  }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Archivo', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* subtle grid bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(26,71,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26,71,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    padding: 1.5rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,10,0.96);
+    backdrop-filter: blur(16px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.18em;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .logo span { color: var(--blue); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .tagline-header {
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    color: #444;
+    text-transform: uppercase;
+  }
+
+  .db-badge {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--blue);
+    border: 1px solid var(--blue-border);
+    padding: 0.25rem 0.6rem;
+    font-family: 'Archivo Black', sans-serif;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 5rem 3rem 3.5rem;
+    max-width: 920px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hero-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--blue);
+  }
+
+  .hero h1 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(2.4rem, 5.5vw, 4.5rem);
+    line-height: 1.06;
+    color: var(--white);
+    margin-bottom: 1.75rem;
+    letter-spacing: -0.01em;
+  }
+  .hero h1 em {
+    color: var(--blue);
+    font-style: normal;
+    position: relative;
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: #777;
+    max-width: 560px;
+  }
+  .hero-sub strong {
+    color: #aaa;
+    font-weight: 400;
+  }
+
+  /* MAIN */
+  .main {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 2rem 3rem 7rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* DIVIDER */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .section-divider span {
+    font-size: 0.62rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #333;
+    white-space: nowrap;
+  }
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* INPUT */
+  .input-wrapper {
+    border: 1px solid var(--border-mid);
+    background: var(--card);
+    transition: border-color 0.2s;
+    margin-bottom: 1.25rem;
+  }
+  .input-wrapper:focus-within {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 1px var(--blue-border);
+  }
+
+  textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--white);
+    font-family: 'Archivo', sans-serif;
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.65;
+    padding: 1.5rem;
+    resize: none;
+    min-height: 150px;
+    outline: none;
+  }
+  textarea::placeholder { color: #333; }
+
+  .input-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .char-count { font-size: 0.7rem; color: #333; }
+
+  /* EXAMPLES */
+  .example-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 2rem;
+  }
+
+  .chip {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--border-mid);
+    color: #555;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Archivo', sans-serif;
+    background: transparent;
+    text-align: left;
+    letter-spacing: 0.05em;
+  }
+  .chip:hover {
+    border-color: var(--blue);
+    color: var(--white);
+    background: var(--blue-dim);
+  }
+
+  /* ANALYZE BTN */
+  .analyze-btn {
+    width: 100%;
+    padding: 1.1rem 2rem;
+    background: var(--blue);
+    color: var(--white);
+    border: none;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 3rem;
+  }
+  .analyze-btn:hover:not(:disabled) {
+    background: #0030dd;
+    letter-spacing: 0.28em;
+  }
+  .analyze-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* LOADING */
+  .loading { display: none; text-align: center; padding: 3rem 0; }
+  .loading.active { display: block; }
+  .loading-bar {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 1.5rem 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .loading-bar::after {
+    content: '';
+    position: absolute;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: var(--blue);
+    animation: loading 1.1s ease-in-out infinite;
+  }
+  @keyframes loading {
+    0% { left: -40%; }
+    100% { left: 100%; }
+  }
+  .loading-text {
+    font-size: 0.65rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #333;
+  }
+
+  /* RESULTS */
+  .results { display: none; animation: fadeUp 0.4s ease; }
+  .results.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .results-title {
+    font-size: 0.62rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #333;
+  }
+  .reset-btn {
+    background: transparent;
+    border: 1px solid var(--border-mid);
+    color: #444;
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .reset-btn:hover { border-color: #555; color: var(--white); }
+
+  /* SCORE ROW */
+  .score-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border: 1px solid var(--border-mid);
+    background: var(--card);
+  }
+  .score-num {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 3.5rem;
+    line-height: 1;
+  }
+  .score-meta { display: flex; flex-direction: column; gap: 0.4rem; }
+  .score-label-sm {
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #333;
+  }
+  .score-bar-track {
+    height: 3px;
+    background: var(--border);
+    flex: 1;
+    position: relative;
+  }
+  .score-bar-fill {
+    position: absolute;
+    left: 0; top: 0; height: 100%;
+    transition: width 0.9s cubic-bezier(0.23,1,0.32,1), background 0.5s;
+    width: 0%;
+  }
+  .score-desc {
+    font-size: 0.8rem;
+    color: #555;
+    text-align: right;
+    font-style: italic;
+    max-width: 160px;
+    line-height: 1.4;
+  }
+
+  /* SUMMARY */
+  .summary-block {
+    border-left: 2px solid var(--blue);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2.5rem;
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: #999;
+    background: var(--blue-dim);
+  }
+
+  /* TECHNIQUES */
+  .techniques-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #333;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .technique-card {
+    border: 1px solid var(--border-mid);
+    background: var(--card);
+    margin-bottom: 0.75rem;
+    animation: slideIn 0.3s ease both;
+    overflow: hidden;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-6px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .technique-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tech-left { display: flex; align-items: center; gap: 0.85rem; }
+  .tech-num {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 0.6rem;
+    color: var(--blue);
+    letter-spacing: 0.1em;
+    min-width: 28px;
+  }
+  .tech-name {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 0.88rem;
+    color: var(--white);
+  }
+  .tech-goal {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    font-family: 'Archivo Black', sans-serif;
+    padding: 0.2rem 0.5rem;
+    border-width: 1px;
+    border-style: solid;
+  }
+
+  .technique-body { padding: 1.1rem 1.25rem; }
+  .tech-explanation {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: #888;
+    margin-bottom: 0.85rem;
+  }
+  .tech-clarity {
+    background: rgba(26,71,255,0.07);
+    border: 1px solid rgba(26,71,255,0.15);
+    border-left: 2px solid var(--blue);
+    padding: 0.85rem 1rem;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: #8aabff;
+    font-style: italic;
+    margin-bottom: 0.75rem;
+  }
+  .tech-trigger {
+    font-size: 0.75rem;
+    color: #383838;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--border);
+  }
+  .tech-trigger strong { color: #444; font-weight: 500; }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.67rem;
+    color: #2a2a2a;
+    line-height: 1.7;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+
+  /* FOOTER */
+  .site-footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .footer-brand {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: #222;
+  }
+  .footer-right { font-size: 0.7rem; color: #333; }
+  .footer-right a { color: var(--blue); text-decoration: none; }
+
+  @media (max-width: 640px) {
+    header, .hero, .main { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .hero { padding-top: 2.5rem; }
+    .hero h1 { font-size: 2rem; }
+    .header-right .tagline-header { display: none; }
+    .score-row { grid-template-columns: auto 1fr; }
+    .score-desc { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">CLARITY<span>TOOL</span></a>
+  <div class="header-right">
+    <span class="tagline-header">See through the noise.</span>
+    <span class="db-badge">90 Techniques</span>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-label">Concept Demo · June 2026</div>
+  <h1>What is this content<br>trying to <em>do</em> to you?</h1>
+  <p class="hero-sub">
+    Paste any headline, newsletter, political speech, or ad copy.<br>
+    ClarityTool identifies which psychological manipulation techniques are being used —
+    <strong>in real time, in plain language, without judgement.</strong><br><br>
+    Not "is this fake?" — but "how is this trying to influence me, and why does it work?"
+  </p>
+</div>
+
+<div class="main">
+
+  <div class="section-divider"><span>Input</span></div>
+
+  <div class="input-wrapper">
+    <textarea id="inputText"
+      placeholder="Paste a headline, email subject, political statement, ad copy, or any text here...&#10;&#10;Example: &quot;LAST CHANCE — Only 3 seats left. Everyone is already signing up. Don't miss out.&quot;"
+      maxlength="2000"></textarea>
+    <div class="input-footer">
+      <span class="char-count" id="charCount">0 / 2000</span>
+    </div>
+  </div>
+
+  <div class="section-divider"><span>Try an example</span></div>
+  <div class="example-chips">
+    <button class="chip" onclick="setExample(0)">LAST CHANCE email</button>
+    <button class="chip" onclick="setExample(1)">Political fear headline</button>
+    <button class="chip" onclick="setExample(2)">Wellness propaganda</button>
+    <button class="chip" onclick="setExample(3)">Corporate euphemism</button>
+    <button class="chip" onclick="setExample(4)">Migration scapegoating</button>
+    <button class="chip" onclick="setExample(5)">Social media outrage</button>
+  </div>
+
+  <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+    Analyze this content
+  </button>
+
+  <div class="loading" id="loading">
+    <div class="loading-bar"></div>
+    <span class="loading-text">Identifying psychological mechanisms...</span>
+  </div>
+
+  <div class="results" id="results">
+    <div class="results-header">
+      <span class="results-title">Analysis complete</span>
+      <button class="reset-btn" onclick="reset()">↺ New analysis</button>
+    </div>
+
+    <div class="score-row">
+      <div class="score-num" id="scoreValue">—</div>
+      <div class="score-meta">
+        <span class="score-label-sm">Manipulation Score / 10</span>
+        <div class="score-bar-track">
+          <div class="score-bar-fill" id="scoreBar"></div>
+        </div>
+        <span class="score-label-sm" id="scoreRange" style="color:#444"></span>
+      </div>
+      <div class="score-desc" id="scoreDesc"></div>
+    </div>
+
+    <div class="summary-block" id="summaryBlock"></div>
+
+    <span class="techniques-label">Techniques detected</span>
+    <div id="techniquesList"></div>
+
+    <div class="disclaimer">
+      ClarityTool names mechanisms — it never judges whether content is true or false. The user decides.<br>
+      Technique database based on Bernays (1923), Cialdini, peer-reviewed research, and PSYOP doctrine.
+    </div>
+  </div>
+
+  <div class="site-footer">
+    <span class="footer-brand">CLARITYTOOL — CONCEPT DEMO 2026</span>
+    <span class="footer-right">UNRLD. Studio &nbsp;·&nbsp; <a href="mailto:joey@unrld.de">joey@unrld.de</a></span>
+  </div>
+
+</div>
+
+<script>
+const examples = [
+  "LAST CHANCE — Only 3 spots remaining. Don't miss out. Everyone is already signing up. Act now before it's too late.",
+  "Migrants are flooding our borders. Our children are no longer safe. Only we can stop this — the others won't.",
+  "Imagine how much propaganda it took to convince us that processed food, screens 24/7 and chronic stress is just normal. Nature. Silence. Real food. That's what humans were made for. Wake up.",
+  "Following a strategic realignment process, we have made the difficult decision to right-size our workforce by approximately 15%. These measures are necessary to ensure long-term value creation for all stakeholders.",
+  "While hardworking citizens struggle to find housing, thousands of migrants are given free apartments. Something is deeply wrong with our priorities. Share if you agree.",
+  "This is the most important video you'll ever watch. The media won't show you this. They don't want you to know. Share before it gets deleted."
+];
+
+const textarea = document.getElementById('inputText');
+const charCount = document.getElementById('charCount');
+const analyzeBtn = document.getElementById('analyzeBtn');
+
+textarea.addEventListener('input', () => {
+  const len = textarea.value.length;
+  charCount.textContent = len + ' / 2000';
+  analyzeBtn.disabled = len < 10;
+});
+
+function setExample(i) {
+  textarea.value = examples[i];
+  charCount.textContent = examples[i].length + ' / 2000';
+  analyzeBtn.disabled = false;
+}
+
+function reset() {
+  textarea.value = '';
+  charCount.textContent = '0 / 2000';
+  analyzeBtn.disabled = true;
+  document.getElementById('results').classList.remove('active');
+  document.getElementById('loading').classList.remove('active');
+  analyzeBtn.style.display = 'block';
+}
+
+const SYSTEM_PROMPT = `You are ClarityTool — a manipulation detection engine built on a database of 90 documented psychological influence techniques.
+
+Your complete technique database:
+
+CATEGORY 1 — EMOTIONAL TRIGGERS
+#1 Fear Appeal (EMO→ACT): Exaggerated threat depiction to generate fear and trigger action
+#2 Fear Framing (EMO→ACT): True information presented so the threat dominates — even when risk is objectively low
+#3 Hope Manipulation (EMO→ACT): Unrealistic hope as bait — "vote for me and everything gets better"
+#4 Anger Triggering (EMO→ACT): Deliberately generating anger against a defined target (person, group, system)
+#5 Disgust Activation (EMO→BEL): Activating disgust responses against persons or groups to generate rejection
+#6 Pride Exploitation (ID→ACT): National or group pride as lever for uncritical compliance
+#7 Guilt Induction (EMO→ACT): Generating guilt feelings to force compliance
+#8 Nostalgia Weaponization (EMO→BEL): Idealized past as argument against present or future
+#9 Shame Broadcasting (SIL): Public shaming to suppress dissent
+#10 Empathy Hijacking (EMO→ACT): Single story representing a complex issue — statistics become a face
+#11 Outrage Farming (EMO→ACT): Continuous outrage production to maximize attention and engagement
+#12 Anxiety Maintenance (EMO→DIS): Sustained diffuse anxiety — no concrete object, no visible exit
+#13 Urgency Inflation (EMO→ACT): Artificial urgency — "now or never" when time actually exists
+#14 Pity Trap (EMO→ACT): Pity as manipulation lever without genuine intent to solve
+#15 Awe Induction (EMO→BEL): Overwhelming staging (ceremonies, music, architecture) to bypass critical thinking
+#16 Love Bombing (ID→ACT): Excessive affection and belonging as entry — then demands follow
+
+CATEGORY 2 — COGNITIVE BIASES
+#17 Confirmation Bias Exploitation (BEL): Preferentially delivering content that confirms existing beliefs
+#18 False Dilemma (BEL→ACT): Presenting two options where many exist — "either you're with us or against us"
+#19 Anchoring (ACT): First number or position stated dominates all subsequent judgments
+#20 Availability Heuristic Abuse (BEL): Frequent repetition makes events seem more probable than they are
+#21 Dunning-Kruger Exploitation (BEL): Oversimplifying complex topics to activate overconfidence in the recipient
+#22 Sunk Cost Manipulation (ACT): "You've already invested so much — stopping now would be a waste"
+#23 Cognitive Overload (DIS): Generating information flood to paralyze judgment
+#24 Illusory Truth Effect (BEL): Repetition creates a sense of truth — regardless of content
+#25 Framing Effect (BEL→ACT): Identical facts framed differently produce opposite judgments
+#26 Spotlight Effect Exploitation (EMO): Creating the feeling "everyone is watching you" to force conformity
+#27 Hyperbolic Discounting (ACT): Immediate small advantage played against large future benefit
+#28 Black-and-White Thinking (BEL): Eliminating nuance — every position must be extreme
+#29 Normalcy Bias Exploitation (SIL): "It's always been this way" — status quo presented as natural and unchangeable
+#30 Overton Window Manipulation (BEL): Gradual shift of what counts as acceptable
+
+CATEGORY 3 — AUTHORITY & TRUST SIGNALS
+#31 False Authority (BEL): Staging non-experts as experts — titles, uniforms, backdrop
+#32 Expert Appeal (BEL): Real expertise selectively cited to support a predetermined conclusion
+#33 Celebrity Endorsement (ACT→BEL): Fame as credibility transfer without substantive qualification
+#34 Testimonial Manipulation (BEL→ACT): Individual experience reports presented as representative
+#35 Institutional Laundering (BEL): Message sent through trusted institution that actually has a different source
+#36 Uniform & Symbol Power (EMO→BEL): Visual authority signals that condition obedience
+#37 Science Washing (BEL): Pseudo-scientific language or aesthetics without genuine scientific basis
+#38 Third Party Validation (BEL): Seemingly independent voices that coordinately amplify the same message
+#39 Credentialism (SIL): Suppressing dissenting opinion by questioning qualifications
+#40 False Consensus (BEL): "All experts agree" — when they don't
+#41 Astroturfing (BEL): Artificial grassroots movement — staged "citizen voices"
+
+CATEGORY 4 — SOCIAL MECHANISMS
+#42 Ingroup/Outgroup (ID): Us vs. Them — belonging as primary identity marker
+#43 Bandwagon Effect (ACT→BEL): "Everyone is doing it" — conformity pressure as decision lever
+#44 Social Proof Manipulation (ACT): Fabricated or selective social validation
+#45 Othering (EMO→BEL): Systematic dehumanization of a group
+#46 Scapegoating (EMO→ACT): Reducing complex problems to identifiable scapegoats
+#47 Tribal Identity Activation (ID): Placing tribal identity above rational argument
+#48 Cancel Culture Weaponization (SIL): Threat of social exclusion to force conformity
+#49 Peer Pressure Amplification (ACT): Using immediate social environment pressure as lever
+#50 Norm Engineering (BEL): Establishing new behavioral standards as "normal" through repetition and staging
+#51 Status Signalling Exploitation (ACT): Framing products or positions as status symbols
+#52 Exclusivity Framing (ID→ACT): Belonging to an elite as purchase motivation
+#53 Community Capture (ID): Replacing genuine community with a manipulated one — then exploiting loyalty
+#54 Virtue Signalling Trap (ID→SIL): Forcing public commitment that then makes deviation impossible
+
+CATEGORY 5 — FRAMING & LANGUAGE
+#55 Loaded Language (EMO→BEL): Emotionally charged terms that contain judgment without argument
+#56 Euphemism (BEL): Concealing unpleasant reality through innocuously sounding language
+#57 Dog Whistle (ID): Messages only the ingroup understands — plausible deniability outward
+#58 Semantic Drift (BEL): Gradually shifting the meaning of terms
+#59 Headline Manipulation (EMO→BEL): Headline conveys a different message than the article — most only read the headline
+#60 Question Framing (BEL): Formulating questions so the answer is pre-determined
+#61 Passive Voice Obfuscation (BEL): Concealing responsibility through passive constructions — "Mistakes were made"
+#62 False Equivalence (BEL): Presenting unequal positions as equivalent
+#63 Strawman (BEL): Attacking a simplified or distorted version of a position instead of the real one
+#64 Gish Gallop (DIS): Producing a volume of arguments that cannot all possibly be refuted
+#65 Tone Policing (SIL): Ignoring the content of a message, attacking the speaker's tone
+#66 Reframing (BEL): Changing problem definition without new facts — different frame, different conclusion
+#67 Spin (BEL): Selectively emphasizing facts to steer toward desired interpretation
+#68 Weasel Words (BEL): Vague formulations that imply a claim without making it — "Some say..."
+#69 Neologism as Control (BEL): Introducing new terms that secure interpretive authority over phenomena
+
+CATEGORY 6 — INFORMATION MANIPULATION
+#70 Cherry Picking (BEL): Showing only confirming facts, ignoring contradicting ones
+#71 Context Stripping (BEL): Removing a true statement from context to change its meaning
+#72 False Balance (BEL): Presenting minority positions as equivalent to consensus
+#73 Firehose of Falsehood (DIS): Mass disinformation — goal is not belief but confusion
+#74 Selective Emphasis (BEL): Manipulating weight through placement, tone, and repetition
+#75 Statistical Manipulation (BEL): Presenting true statistics misleadingly — absolute vs. relative numbers etc.
+#76 Memory Hole (BEL): Making inconvenient historical facts disappear from public discourse
+#77 Manufactured Consensus (BEL): Creating apparent expert consensus through coordinated publications
+#78 Plausible Deniability Construction (SIL): Formulating messages so that intent remains deniable
+#79 Gatekeeper Control (BEL): Controlling access to information sources to secure interpretive authority
+#80 Pre-bunking Inversion (BEL): Anticipating and defusing criticism before it is voiced
+#81 Narrative Flooding (DIS): Drowning rebuttals in sheer volume of alternative narratives
+
+CATEGORY 7 — BEHAVIORAL TRIGGERS
+#82 Scarcity (ACT): Artificial scarcity — "Only 3 remaining"
+#83 Reciprocity Trap (ACT): Small gift creates obligation
+#84 Commitment & Consistency (ACT): Small commitment first — then gradually larger demands
+#85 Social Commitment Escalation (ACT→SIL): Public commitment makes withdrawal psychologically impossible
+#86 Foot-in-the-Door (ACT): Small request first to establish a yes-pattern
+#87 Door-in-the-Face (ACT): Exaggerated demand first — then "compromise" that was the real goal
+#88 Operant Conditioning (ACT): Systematically applying reward and punishment to shape behavior
+#89 Variable Reward Scheduling (ACT): Unpredictable rewards create stronger attachment than regular ones — the core Social Media mechanism
+
+CATEGORY 8 — DISCOURSE SUPPRESSION
+#90 Thought-Stopper Label (SIL): A discrediting category applied to anyone who questions a position — regardless of their argument. The label replaces the debate entirely. Those who fear it self-censor. Examples: conspiracy theorist, science denier, apologist, extremist.
+
+---
+
+Analyze the given text and respond ONLY with a valid JSON object:
+
+{
+  "score": <integer 1-10>,
+  "summary": "<2-3 sentence plain English summary of what this content is doing psychologically>",
+  "techniques": [
+    {
+      "id": "#XX",
+      "name": "<exact technique name from database>",
+      "goal": "<one of: ACT, BEL, EMO, SIL, ID, DIS — use the primary goal code>",
+      "explanation": "<1-2 sentences: how exactly does this technique appear in the analyzed text>",
+      "signal": "<what specific psychological trigger or vulnerability this activates>",
+      "clarityOutput": "<the sentence ClarityTool shows the user — calm, factual, plain language, never preachy, never judgmental>"
+    }
+  ]
+}
+
+Scoring guide:
+- 1-3: Standard persuasion, minor or transparent techniques
+- 4-6: Moderate manipulation, multiple techniques combined
+- 7-10: Heavy manipulation, systematic layering of techniques
+
+Rules:
+- Detect only techniques genuinely present — do not invent detections
+- Maximum 5 techniques per analysis
+- clarityOutput must be calm, factual, and informative — never moralistic
+- All output in English
+- Return ONLY valid JSON, no other text, no markdown fences`;
+
+async function analyze() {
+  const text = textarea.value.trim();
+  if (!text || text.length < 10) return;
+
+  analyzeBtn.style.display = 'none';
+  document.getElementById('loading').classList.add('active');
+  document.getElementById('results').classList.remove('active');
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: `Analyze this text:\n\n"${text}"` }]
+      })
+    });
+
+    const data = await response.json();
+    let raw = data.content?.[0]?.text || '';
+    raw = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(raw);
+    renderResults(parsed);
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('loading').classList.remove('active');
+    analyzeBtn.style.display = 'block';
+    alert('Analysis failed. Please try again.');
+  }
+}
+
+const goalColors = {
+  ACT: { text: '#ff6b35', border: 'rgba(255,107,53,0.3)' },
+  BEL: { text: '#1a47ff', border: 'rgba(26,71,255,0.3)' },
+  EMO: { text: '#e91e8c', border: 'rgba(233,30,140,0.3)' },
+  SIL: { text: '#b46fff', border: 'rgba(180,111,255,0.3)' },
+  ID:  { text: '#ff9800', border: 'rgba(255,152,0,0.3)' },
+  DIS: { text: '#78909c', border: 'rgba(120,144,156,0.3)' },
+};
+
+const scoreLabels = {
+  low:  { text: '1–3 · Standard persuasion', desc: 'Common persuasion techniques. Present but relatively transparent.' },
+  mid:  { text: '4–6 · Moderate manipulation', desc: 'Multiple techniques combined. Worth paying attention to.' },
+  high: { text: '7–10 · Heavy manipulation', desc: 'Systematic layering of psychological pressure tactics.' },
+};
+
+function renderResults(data) {
+  document.getElementById('loading').classList.remove('active');
+
+  const score = Math.max(1, Math.min(10, Math.round(data.score)));
+  const scoreEl = document.getElementById('scoreValue');
+  const scoreBar = document.getElementById('scoreBar');
+  const scoreRange = document.getElementById('scoreRange');
+  const scoreDesc = document.getElementById('scoreDesc');
+
+  const tier = score <= 3 ? 'low' : score <= 6 ? 'mid' : 'high';
+  const color = score <= 3 ? '#4caf50' : score <= 6 ? '#ff9800' : '#f44336';
+
+  scoreEl.textContent = score;
+  scoreEl.style.color = color;
+  scoreRange.textContent = scoreLabels[tier].text;
+  scoreRange.style.color = color;
+  scoreDesc.textContent = scoreLabels[tier].desc;
+
+  setTimeout(() => {
+    scoreBar.style.width = (score * 10) + '%';
+    scoreBar.style.background = color;
+  }, 80);
+
+  document.getElementById('summaryBlock').textContent = data.summary;
+
+  const list = document.getElementById('techniquesList');
+  list.innerHTML = '';
+
+  (data.techniques || []).forEach((t, i) => {
+    const gc = goalColors[t.goal] || goalColors.BEL;
+    const card = document.createElement('div');
+    card.className = 'technique-card';
+    card.style.animationDelay = (i * 0.07) + 's';
+    card.innerHTML = `
+      <div class="technique-header">
+        <div class="tech-left">
+          <span class="tech-num">${t.id}</span>
+          <span class="tech-name">${t.name}</span>
+        </div>
+        <span class="tech-goal" style="color:${gc.text};border-color:${gc.border}">${t.goal}</span>
+      </div>
+      <div class="technique-body">
+        <div class="tech-explanation">${t.explanation}</div>
+        <div class="tech-clarity">"${t.clarityOutput}"</div>
+        <div class="tech-trigger"><strong>Psychological trigger:</strong> ${t.signal}</div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+
+  document.getElementById('results').classList.add('active');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+analyzeBtn.disabled = true;
+</script>
+
+</body>
+</html>
