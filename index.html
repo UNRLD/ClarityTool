@@ -81,6 +81,11 @@
   .footer-brand { font-family: 'Archivo Black', sans-serif; font-size: 0.65rem; letter-spacing: 0.18em; color: #6a6a6a; }
   .footer-right { font-size: 0.65rem; color: #8a8a8a; }
   .footer-right a { color: var(--blue); text-decoration: none; }
+  .howto { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.85rem 1.1rem; margin-bottom: 1.6rem; border: 1px solid var(--border-mid); background: rgba(26,71,255,0.04); }
+  .howto-step { display: flex; align-items: center; gap: 0.5rem; font-size: 0.72rem; color: #b4b4b4; }
+  .howto-num { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--blue); color: #fff; font-family: 'Archivo Black', sans-serif; font-size: 0.6rem; flex: none; }
+  .howto-arrow { color: #6a6a6a; font-size: 0.8rem; }
+  @media (max-width: 600px) { .howto-arrow { display: none; } .howto { gap: 0.5rem 0.7rem; padding: 0.8rem 0.9rem; } }
   @media (max-width: 600px) {
     header, .hero, .main { padding-left: 1.25rem; padding-right: 1.25rem; }
     .hero { padding-top: 2.5rem; } .hero h1 { font-size: 2rem; }
@@ -102,6 +107,13 @@
   <p class="hero-sub">Paste any headline, newsletter, political speech, or ad copy.<br><strong>Not "is this fake?" — but "how is this trying to influence me, and why does it work?"</strong></p>
 </div>
 <div class="main">
+  <div class="howto">
+    <div class="howto-step"><span class="howto-num">1</span> Pick a ready-made example below</div>
+    <span class="howto-arrow">&rarr;</span>
+    <div class="howto-step"><span class="howto-num">2</span> Hit &ldquo;Analyze this content&rdquo;</div>
+    <span class="howto-arrow">&rarr;</span>
+    <div class="howto-step"><span class="howto-num">3</span> &ldquo;&#8635; New analysis&rdquo; resets</div>
+  </div>
   <div class="divider"><span>Input</span></div>
   <div class="input-box">
     <textarea id="inputText" placeholder="Paste a headline, email, political statement, or ad copy here...&#10;&#10;Or try one of the examples below." maxlength="2000"></textarea>
