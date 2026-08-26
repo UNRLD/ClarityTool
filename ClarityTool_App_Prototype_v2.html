@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClarityTool — App Prototype v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue: #1a47ff; --black: #0a0a0a; --white: #f5f5f0; --card: #141414;
+    --border: #232323; --border-soft: #1a1a1a; --muted: #a4a4a4; --dim: #8a8a8a;
+    --act: #ff6b35; --bel: #4f8fff; --emo: #e91e8c; --sil: #b46fff; --id: #ffb347;
+    --danger: #ff5a52; --warn: #ffa733; --safe: #63c766;
+  }
+  html, body { height: 100%; }
+  body {
+    background: #050505; color: var(--white); font-family: 'Archivo', sans-serif;
+    font-weight: 300; display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 24px 12px;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0;
+    background-image: linear-gradient(rgba(26,71,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(26,71,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px; pointer-events: none;
+  }
+
+  .phone {
+    position: relative; z-index: 1; width: 390px; max-width: 100%; height: 844px; max-height: calc(100vh - 48px);
+    background: var(--black); border-radius: 46px; padding: 12px;
+    box-shadow: 0 0 0 2px #1c1c1c, 0 0 0 12px #0c0c0c, 0 40px 90px rgba(0,0,0,0.7); overflow: hidden;
+  }
+  .screen { position: relative; width: 100%; height: 100%; background: var(--black); border-radius: 34px; overflow: hidden; display: flex; flex-direction: column; }
+  .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 132px; height: 26px; background: var(--black); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; z-index: 40; }
+
+  .statusbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 26px 6px; font-size: 13px; font-weight: 600; flex: none; }
+  .statusbar .right { display: flex; align-items: center; gap: 6px; }
+
+  .appbar { padding: 8px 20px 13px; border-bottom: 1px solid var(--border-soft); flex: none; }
+  .appbar-top { display: flex; align-items: center; justify-content: space-between; }
+  .brand { font-family: 'Archivo Black', sans-serif; font-size: 16px; letter-spacing: 0.14em; }
+  .brand span { color: var(--blue); }
+  .kicker { font-size: 9.5px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--dim); margin-top: 3px; }
+  .toggle-wrap { display: flex; align-items: center; gap: 9px; }
+  .toggle-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
+  .toggle { position: relative; width: 46px; height: 26px; border-radius: 20px; background: #262626; cursor: pointer; transition: background 0.25s; flex: none; border: 1px solid #303030; }
+  .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #cfcfcf; transition: transform 0.25s, background 0.25s; }
+  body.on .toggle { background: var(--blue); border-color: var(--blue); }
+  body.on .toggle::after { transform: translateX(20px); background: #fff; }
+
+  /* ---------- Views ---------- */
+  .viewport { flex: 1; position: relative; overflow: hidden; }
+  .view { position: absolute; inset: 0; overflow-y: auto; padding: 14px 16px 20px; -webkit-overflow-scrolling: touch; }
+  .view::-webkit-scrollbar { display: none; }
+  .view[hidden] { display: none; }
+  .list-label { font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--dim); margin: 4px 2px 12px; }
+
+  /* ---------- Feed posts ---------- */
+  .post { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px 16px 16px; margin-bottom: 13px; }
+  .post-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .avatar { width: 26px; height: 26px; border-radius: 7px; font-family: 'Archivo Black', sans-serif; font-size: 10px; display: flex; align-items: center; justify-content: center; color: #fff; flex: none; }
+  .src-name { font-size: 12.5px; font-weight: 600; color: #e8e8e6; }
+  .src-meta { font-size: 10.5px; color: var(--dim); margin-top: 1px; }
+  .post-body { font-size: 15px; line-height: 1.62; color: #e2e2df; }
+  .post-body.headline { font-family: 'Archivo Black', sans-serif; font-size: 17px; line-height: 1.34; color: var(--white); letter-spacing: -0.01em; }
+  .score-badge { display: none; align-items: center; gap: 7px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-soft); }
+  body.on .score-badge { display: flex; }
+  .score-chip { font-family: 'Archivo Black', sans-serif; font-size: 12px; padding: 3px 9px; border-radius: 7px; flex: none; }
+  .score-text { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .score-text b { color: #dcdcda; font-weight: 600; }
+  .tap-hint { font-size: 10.5px; color: var(--blue); margin-top: 9px; display: none; letter-spacing: 0.04em; }
+  body.on .tap-hint { display: block; }
+
+  /* ---------- Marks ---------- */
+  mark { background: transparent; color: inherit; padding: 0; border-radius: 4px; cursor: default; transition: background 0.3s, box-shadow 0.3s; box-shadow: none; -webkit-tap-highlight-color: transparent; }
+  body.on mark { cursor: pointer; padding: 1px 3px; margin: 0 -1px; background: var(--mark-bg); box-shadow: inset 0 -2px 0 var(--mark-line); }
+  body.on mark:active { background: var(--mark-line); color: #0a0a0a; }
+  mark[data-cat="act"] { --mark-bg: rgba(255,107,53,0.16); --mark-line: var(--act); }
+  mark[data-cat="bel"] { --mark-bg: rgba(79,143,255,0.16); --mark-line: var(--bel); }
+  mark[data-cat="emo"] { --mark-bg: rgba(233,30,140,0.16); --mark-line: var(--emo); }
+  mark[data-cat="sil"] { --mark-bg: rgba(180,111,255,0.16); --mark-line: var(--sil); }
+  mark[data-cat="id"]  { --mark-bg: rgba(255,179,71,0.16);  --mark-line: var(--id); }
+
+  /* ---------- Inbox list ---------- */
+  .mail-row { display: flex; gap: 11px; padding: 13px 12px; border-radius: 13px; border: 1px solid transparent; cursor: pointer; transition: background 0.15s; position: relative; }
+  .mail-row:active { background: #111; }
+  .mail-row + .mail-row { margin-top: 2px; }
+  .mail-av { width: 34px; height: 34px; border-radius: 9px; font-family: 'Archivo Black', sans-serif; font-size: 12px; display: flex; align-items: center; justify-content: center; color: #fff; flex: none; }
+  .mail-main { flex: 1; min-width: 0; }
+  .mail-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .mail-from { font-size: 13.5px; font-weight: 600; color: #eaeae8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mail-time { font-size: 10.5px; color: var(--dim); flex: none; }
+  .mail-subj { font-size: 12.5px; color: #d0d0ce; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mail-prev { font-size: 11.5px; color: var(--dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mail-flag { display: none; margin-top: 7px; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 500; letter-spacing: 0.02em; }
+  body.on .mail-flag { display: flex; }
+  .mail-flag .fdot { width: 7px; height: 7px; border-radius: 2px; flex: none; }
+  body.on .mail-row.risk { border-color: var(--rk-b); background: var(--rk-bg); }
+  .mail-row.risk { --rk-bg: transparent; --rk-b: transparent; }
+
+  /* ---------- Mail detail ---------- */
+  .mailview { position: absolute; inset: 0; z-index: 45; background: var(--black); display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.22,1,0.36,1); }
+  .mailview.open { transform: translateX(0); }
+  .mv-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border-soft); flex: none; }
+  .mv-back { font-size: 22px; color: var(--blue); cursor: pointer; line-height: 1; padding: 0 4px; }
+  .mv-bar-title { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+  .mv-body { flex: 1; overflow-y: auto; padding: 18px 20px 30px; }
+  .mv-body::-webkit-scrollbar { display: none; }
+  .mv-subj { font-family: 'Archivo Black', sans-serif; font-size: 18px; line-height: 1.3; margin-bottom: 14px; }
+  .mv-from { display: flex; gap: 11px; align-items: center; padding-bottom: 14px; border-bottom: 1px solid var(--border-soft); margin-bottom: 8px; }
+  .mv-from-name { font-size: 13.5px; font-weight: 600; color: #eaeae8; }
+  .mv-from-addr { font-size: 11px; color: var(--dim); margin-top: 2px; word-break: break-all; }
+  .mv-verdict { display: none; margin: 12px 0 16px; padding: 11px 13px; border-radius: 11px; font-size: 12px; line-height: 1.5; }
+  body.on .mv-verdict { display: block; }
+  .mv-verdict .vhead { font-family: 'Archivo Black', sans-serif; font-size: 11px; letter-spacing: 0.04em; margin-bottom: 4px; display: flex; align-items: center; gap: 7px; }
+  .mv-text { font-size: 14.5px; line-height: 1.68; color: #e2e2df; }
+  .mv-text p { margin-bottom: 13px; }
+  .mv-hint { font-size: 10.5px; color: var(--blue); margin-top: 8px; display: none; }
+  body.on .mv-hint { display: block; }
+
+  /* ---------- Bottom lens strip + tabbar ---------- */
+  .lens-strip { flex: none; padding: 8px 16px; border-top: 1px solid var(--border-soft); display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; background: rgba(10,10,10,0.9); }
+  .strip-off { font-size: 10.5px; letter-spacing: 0.08em; color: var(--dim); }
+  .strip-on { display: none; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  body.on .strip-on { display: flex; }
+  body.on .strip-off { display: none; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+  .tabbar { flex: none; display: flex; border-top: 1px solid var(--border); background: rgba(10,10,10,0.96); padding-bottom: env(safe-area-inset-bottom); }
+  .tab { flex: 1; padding: 12px 0 14px; text-align: center; cursor: pointer; color: var(--dim); transition: color 0.15s; }
+  .tab.active { color: var(--white); }
+  .tab.active .tab-ico { color: var(--blue); }
+  .tab-ico { font-size: 19px; line-height: 1; }
+  .tab-txt { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; font-weight: 500; }
+
+  /* ---------- Technique sheet ---------- */
+  .backdrop { position: absolute; inset: 0; z-index: 50; background: rgba(0,0,0,0.55); opacity: 0; pointer-events: none; transition: opacity 0.28s; }
+  .backdrop.open { opacity: 1; pointer-events: auto; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 60; background: #161616; border-top-left-radius: 24px; border-top-right-radius: 24px; border-top: 1px solid var(--border); transform: translateY(102%); transition: transform 0.32s cubic-bezier(0.22,1,0.36,1); padding: 10px 20px calc(26px + env(safe-area-inset-bottom)); }
+  .sheet.open { transform: translateY(0); }
+  .grabber { width: 38px; height: 4px; border-radius: 3px; background: #3a3a3a; margin: 6px auto 16px; }
+  .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .tech-num { font-family: 'Archivo Black', sans-serif; font-size: 11px; letter-spacing: 0.06em; }
+  .tech-name { font-family: 'Archivo Black', sans-serif; font-size: 19px; line-height: 1.15; margin-top: 3px; }
+  .goal-chip { font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.08em; padding: 4px 8px; border-radius: 6px; border: 1px solid; flex: none; white-space: nowrap; }
+  .sheet-mech { font-size: 13.5px; line-height: 1.62; color: var(--muted); margin-bottom: 14px; }
+  .sheet-clarity { border-left: 2px solid var(--blue); background: rgba(26,71,255,0.08); padding: 12px 14px; border-radius: 0 10px 10px 0; font-size: 13px; line-height: 1.6; color: #b9c8ff; }
+  .sheet-clarity .lbl { display: block; font-family: 'Archivo Black', sans-serif; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; }
+  .sheet-foot { margin-top: 16px; font-size: 10.5px; color: var(--dim); line-height: 1.5; text-align: center; }
+
+  @media (max-width: 430px) {
+    body { padding: 0; }
+    .phone { width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; padding: 0; box-shadow: none; }
+    .screen { border-radius: 0; }
+    .notch { display: none; }
+    .statusbar { padding-top: max(12px, env(safe-area-inset-top)); }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="screen">
+    <div class="notch"></div>
+
+    <div class="statusbar">
+      <span>9:41</span>
+      <div class="right">
+        <svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#f5f5f0"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#f5f5f0"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#f5f5f0"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#f5f5f0"/></svg>
+        <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="#f5f5f0" stroke-opacity="0.5"/><rect x="2" y="2" width="18" height="8" rx="1.5" fill="#f5f5f0"/><rect x="23" y="4" width="1.5" height="4" rx="0.75" fill="#f5f5f0" fill-opacity="0.5"/></svg>
+      </div>
+    </div>
+
+    <div class="appbar">
+      <div class="appbar-top">
+        <div>
+          <div class="brand">CLARITY<span>TOOL</span></div>
+          <div class="kicker" id="kicker">Your feed, decoded</div>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label">Lens</span>
+          <div class="toggle" id="toggle" role="switch" aria-label="Toggle ClarityTool lens"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="viewport">
+      <!-- ============ FEED ============ -->
+      <div class="view" id="feedView">
+        <div class="list-label">Today · For you</div>
+
+        <div class="post">
+          <div class="post-head"><div class="avatar" style="background:#8b2f2f;">NN</div><div><div class="src-name">National Now</div><div class="src-meta">Sponsored · Politics</div></div></div>
+          <div class="post-body headline"><mark data-cat="emo" data-t="ff">Migrants are flooding our borders.</mark> <mark data-cat="emo" data-t="fa">Our children are no longer safe.</mark> <mark data-cat="id" data-t="io">Only we can stop this — the others won't.</mark></div>
+          <div class="score-badge"><span class="score-chip" style="background:rgba(244,67,54,0.15);color:#ff5a52;">9 / 10</span><span class="score-text"><b>Heavy manipulation.</b> Fear, group identity and a false either/or, stacked in three sentences.</span></div>
+          <div class="tap-hint">↑ Tap any highlight to see the technique</div>
+        </div>
+
+        <div class="post">
+          <div class="post-head"><div class="avatar" style="background:#2f5c8b;">Vx</div><div><div class="src-name">Voices_x</div><div class="src-meta">14.2k shares · 2h</div></div></div>
+          <div class="post-body">While <mark data-cat="emo" data-t="ll">hardworking citizens struggle to find housing</mark>, <mark data-cat="emo" data-t="sc">thousands of migrants are given free apartments</mark>. Something is deeply wrong with our priorities. <mark data-cat="act" data-t="of">Share if you agree.</mark></div>
+          <div class="score-badge"><span class="score-chip" style="background:rgba(255,152,0,0.15);color:#ffa733;">8 / 10</span><span class="score-text"><b>Moderate–heavy.</b> A structural problem pinned on one group, then engineered to spread.</span></div>
+          <div class="tap-hint">↑ Tap any highlight to see the technique</div>
+        </div>
+
+        <div class="post">
+          <div class="post-head"><div class="avatar" style="background:#3a3a3a;">CO</div><div><div class="src-name">Corp Comms</div><div class="src-meta">Press release · 5h</div></div></div>
+          <div class="post-body">Following a <mark data-cat="bel" data-t="eu">strategic realignment</mark>, we've made the difficult decision to <mark data-cat="bel" data-t="eu2">right-size our workforce</mark> by ~15%. These measures ensure <mark data-cat="bel" data-t="sp">long-term value creation for all stakeholders</mark>.</div>
+          <div class="score-badge"><span class="score-chip" style="background:rgba(255,152,0,0.15);color:#ffa733;">5 / 10</span><span class="score-text"><b>Moderate.</b> Layoffs, rewritten so nobody is responsible and everybody benefits.</span></div>
+          <div class="tap-hint">↑ Tap any highlight to see the technique</div>
+        </div>
+
+        <div class="post">
+          <div class="post-head"><div class="avatar" style="background:#1f5c3a;">SH</div><div><div class="src-name">Shelter House</div><div class="src-meta">Non-profit · 1d</div></div></div>
+          <div class="post-body">Last year, <mark data-cat="emo" data-t="eh">847 families</mark> received emergency housing support through our program. This year we're aiming for 1,200. Here's how.</div>
+          <div class="score-badge"><span class="score-chip" style="background:rgba(76,175,80,0.15);color:#63c766;">2 / 10</span><span class="score-text"><b>Low.</b> One emotional touch — but specific, verifiable, honest. ClarityTool doesn't cry wolf.</span></div>
+          <div class="tap-hint">↑ Tap the highlight — flagged, but gently</div>
+        </div>
+      </div>
+
+      <!-- ============ INBOX ============ -->
+      <div class="view" id="inboxView" hidden>
+        <div class="list-label">Inbox · 4 messages · screened before you open</div>
+
+        <div class="mail-row risk" data-m="ceo" style="--rk-bg:rgba(255,107,53,0.06);--rk-b:rgba(255,107,53,0.3);">
+          <div class="mail-av" style="background:#5a4a2a;">MB</div>
+          <div class="mail-main">
+            <div class="mail-top"><span class="mail-from">Michael Berg · CEO</span><span class="mail-time">9:12</span></div>
+            <div class="mail-subj">Urgent — need this handled now</div>
+            <div class="mail-prev">Hi, I'm in back-to-back meetings and can't take calls…</div>
+            <div class="mail-flag" style="color:var(--act);"><span class="fdot" style="background:var(--act);"></span>Impersonation + urgency · don't act on this yet</div>
+          </div>
+        </div>
+
+        <div class="mail-row risk" data-m="bank" style="--rk-bg:rgba(233,30,140,0.06);--rk-b:rgba(233,30,140,0.3);">
+          <div class="mail-av" style="background:#2f4a6b;">SB</div>
+          <div class="mail-main">
+            <div class="mail-top"><span class="mail-from">SecureBank Alerts</span><span class="mail-time">8:47</span></div>
+            <div class="mail-subj">⚠ Unusual sign-in detected on your account</div>
+            <div class="mail-prev">We detected a suspicious login. Your account has been…</div>
+            <div class="mail-flag" style="color:var(--danger);"><span class="fdot" style="background:var(--danger);"></span>3 pressure tactics · likely phishing</div>
+          </div>
+        </div>
+
+        <div class="mail-row risk" data-m="it" style="--rk-bg:rgba(255,107,53,0.06);--rk-b:rgba(255,107,53,0.3);">
+          <div class="mail-av" style="background:#3a3a3a;">IT</div>
+          <div class="mail-main">
+            <div class="mail-top"><span class="mail-from">IT Service Desk</span><span class="mail-time">Yesterday</span></div>
+            <div class="mail-subj">Action required: password re-verification</div>
+            <div class="mail-prev">As part of our scheduled security upgrade, all staff…</div>
+            <div class="mail-flag" style="color:var(--warn);"><span class="fdot" style="background:var(--warn);"></span>Credential request · IT never asks this</div>
+          </div>
+        </div>
+
+        <div class="mail-row" data-m="ok">
+          <div class="mail-av" style="background:#1f5c3a;">SK</div>
+          <div class="mail-main">
+            <div class="mail-top"><span class="mail-from">Sarah · People Team</span><span class="mail-time">Mon</span></div>
+            <div class="mail-subj">Team lunch moved to Thursday</div>
+            <div class="mail-prev">Quick note — the team lunch is now Thursday 12:30…</div>
+            <div class="mail-flag" style="color:var(--safe);"><span class="fdot" style="background:var(--safe);"></span>Looks clean · no pressure tactics found</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ MAIL DETAIL ============ -->
+      <div class="mailview" id="mailview">
+        <div class="mv-bar"><span class="mv-back" id="mvBack">‹</span><span class="mv-bar-title">Message</span></div>
+        <div class="mv-body" id="mvBody"></div>
+      </div>
+    </div>
+
+    <!-- lens strip -->
+    <div class="lens-strip">
+      <span class="strip-off">Lens off — raw view. Flip it on to screen this.</span>
+      <div class="strip-on">
+        <div class="legend-item"><span class="legend-dot" style="background:var(--emo);"></span>Emotion</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--act);"></span>Action</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--bel);"></span>Belief</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--id);"></span>Identity</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--sil);"></span>Silence</div>
+      </div>
+    </div>
+
+    <!-- tabbar -->
+    <div class="tabbar">
+      <div class="tab active" id="tabFeed"><div class="tab-ico">◎</div><div class="tab-txt">Feed</div></div>
+      <div class="tab" id="tabInbox"><div class="tab-ico">✉</div><div class="tab-txt">Inbox</div></div>
+    </div>
+
+    <!-- technique sheet -->
+    <div class="backdrop" id="backdrop"></div>
+    <div class="sheet" id="sheet">
+      <div class="grabber"></div>
+      <div class="sheet-head">
+        <div><div class="tech-num" id="techNum">#0</div><div class="tech-name" id="techName">Technique</div></div>
+        <div class="goal-chip" id="goalChip">GOAL</div>
+      </div>
+      <div class="sheet-mech" id="techMech"></div>
+      <div class="sheet-clarity"><span class="lbl">ClarityTool shows</span><span id="techClarity"></span></div>
+      <div class="sheet-foot">ClarityTool names the mechanism. It never says the content is true or false. You decide.</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const techniques = {
+    // --- Feed ---
+    ff:{num:"#2",name:"Fear Framing",goal:"EMO",cat:"emo",mech:"“Flooding” frames migration as an unstoppable natural disaster rather than a policy question. The metaphor persuades before any fact appears.",clarity:"“Flooding” is a framing choice. It sets the emotional temperature before you've seen a single number."},
+    fa:{num:"#1",name:"Fear Appeal",goal:"EMO→ACT",cat:"emo",mech:"“Our children are no longer safe” hits the primal protective instinct and frames the situation as an immediate threat to your own family.",clarity:"This links child safety directly to migration. The causal connection is asserted here, not demonstrated."},
+    io:{num:"#42",name:"Ingroup / Outgroup",goal:"ID",cat:"id",mech:"“Only we can stop this — the others won't” draws a hard line between a protective us and a negligent them.",clarity:"“Only we” turns disagreement into betrayal of the group. Notice when a message asks you to pick a side before it makes an argument."},
+    ll:{num:"#55",name:"Loaded Language",goal:"EMO→BEL",cat:"emo",mech:"“Hardworking citizens” set against migrants getting things “for free” encodes a moral hierarchy before any evidence appears.",clarity:"The contrast is a value judgment built into the wording, not a factual description."},
+    sc:{num:"#46",name:"Scapegoating",goal:"EMO→ACT",cat:"emo",mech:"A complex, structural problem — housing shortage — is pinned entirely on one identifiable group.",clarity:"Housing shortages have many structural causes. This presents one group as the whole explanation."},
+    of:{num:"#11",name:"Outrage Farming",goal:"EMO→ACT",cat:"act",mech:"“Share if you agree” sits at the peak of emotional activation — the moment you're most stirred up is when you're asked to spread it.",clarity:"The call to share is placed at maximum anger. That's the mechanics of virality, not of information."},
+    eu:{num:"#56",name:"Euphemism",goal:"BEL",cat:"bel",mech:"“Strategic realignment” replaces a plain word for cutting jobs, making a hard event sound like a calm optimisation.",clarity:"Translate it back to direct language — what's left? “Realignment” is softening, not describing."},
+    eu2:{num:"#56",name:"Euphemism",goal:"BEL",cat:"bel",mech:"“Right-size our workforce” means laying people off. The phrase lowers the emotional weight of the decision.",clarity:"“Right-sizing the workforce” means firing employees. The wording is chosen to minimise how severe it feels."},
+    sp:{num:"#67",name:"Spin",goal:"BEL",cat:"bel",mech:"“Long-term value creation for all stakeholders” reframes a cost cut as something that benefits everyone.",clarity:"A standard investor-relations frame: a cost reduction dressed up as a shared benefit."},
+    eh:{num:"#10",name:"Empathy Hijacking",goal:"EMO→ACT",cat:"emo",mech:"“847 families” puts a human face on an abstract issue. Here it's used transparently — the figure is concrete and checkable.",clarity:"This is honest communication — specific and verifiable, not vague. Flagged so you see the mechanism, not because it's deceptive."},
+    // --- Inbox / social engineering ---
+    au:{num:"#31",name:"False Authority",goal:"BEL",cat:"bel",mech:"The sender poses as the CEO. Authority short-circuits scrutiny: we're wired to comply with someone who outranks us, especially in a hierarchy.",clarity:"The claim of authority is the attack. Verify the sender through a second channel — a real CEO won't mind a phone call."},
+    ur:{num:"#13",name:"Urgency Inflation",goal:"EMO→ACT",cat:"act",mech:"“Before end of day”, “can't take calls” — a manufactured deadline that removes the time you'd normally use to check.",clarity:"Artificial time pressure is the single most common ingredient in fraud. Slowing down is the defence."},
+    fe:{num:"#1",name:"Fear Appeal",goal:"EMO→ACT",cat:"emo",mech:"“Suspicious login… your account has been limited” triggers alarm, so you click first and think later.",clarity:"The message manufactures a threat to rush you. Real security alerts don't ask you to act inside a countdown."},
+    il:{num:"#35",name:"Institutional Laundering",goal:"BEL",cat:"bel",mech:"Bank-style logos, official tone and a legitimate-looking sender borrow the credibility of a trusted institution.",clarity:"Looking official is not being official. Check the actual sending domain — trust is being borrowed, not earned."},
+    cr:{num:"#31",name:"False Authority",goal:"BEL",cat:"bel",mech:"“IT Service Desk” asking you to confirm your password uses the authority of the help desk to extract credentials.",clarity:"Real IT never asks for your password. A request for credentials is the tell, whoever it claims to be."},
+    ex:{num:"#52",name:"Exclusivity Framing",goal:"ID→ACT",cat:"id",mech:"“Keep it between us” makes you the boss's trusted insider — a small inner circle. Feeling chosen and special lowers your guard.",clarity:"Secrecy dressed up as a privilege. That inner circle is exactly what stops anyone from catching the transfer — ask why no one else may know."}
+  };
+
+  const goalColors = {"ACT":"act","EMO→ACT":"act","BEL→ACT":"bel","BEL":"bel","EMO→BEL":"emo","EMO":"emo","SIL":"sil","ID":"id"};
+  const goalStyle = {
+    act:{c:"#ff6b35",bg:"rgba(255,107,53,0.1)",b:"rgba(255,107,53,0.3)"},
+    bel:{c:"#4f8fff",bg:"rgba(79,143,255,0.1)",b:"rgba(79,143,255,0.3)"},
+    emo:{c:"#e91e8c",bg:"rgba(233,30,140,0.1)",b:"rgba(233,30,140,0.3)"},
+    sil:{c:"#b46fff",bg:"rgba(180,111,255,0.1)",b:"rgba(180,111,255,0.3)"},
+    id:{c:"#ffb347",bg:"rgba(255,179,71,0.1)",b:"rgba(255,179,71,0.3)"}
+  };
+
+  // mail bodies
+  const mails = {
+    ceo:{ from:"Michael Berg · CEO", addr:"m.berg@company-invoices.net", av:"MB", avbg:"#5a4a2a",
+      subj:"Urgent — need this handled now",
+      verdict:{lvl:"danger",head:"Likely CEO fraud (BEC)",txt:"Three documented techniques stacked. The sender domain isn't your company's. Confirm any payment request through a known channel before acting."},
+      html:`<p>Hi,</p><p><mark data-cat="bel" data-t="au">As your CEO</mark>, I need you to process a wire transfer to a new supplier today. <mark data-cat="act" data-t="ur">I'm in back-to-back meetings and can't take calls — this is time-critical and must be done before end of day.</mark></p><p><mark data-cat="id" data-t="ex">Please keep it between us for now</mark> and send confirmation once complete.</p><p>Michael</p>` },
+    bank:{ from:"SecureBank Alerts", addr:"no-reply@secure-bank-verify.com", av:"SB", avbg:"#2f4a6b",
+      subj:"⚠ Unusual sign-in detected on your account",
+      verdict:{lvl:"danger",head:"3 pressure tactics · likely phishing",txt:"Fear, a countdown, and borrowed bank branding — the classic phishing recipe. The sending domain is not your bank."},
+      html:`<p>Dear customer,</p><p><mark data-cat="bel" data-t="il">SecureBank</mark> detected a suspicious login attempt. <mark data-cat="emo" data-t="fe">For your security, your account has been temporarily limited.</mark></p><p><mark data-cat="act" data-t="ur">Verify your identity within 24 hours to avoid permanent suspension.</mark></p><p>[ Verify now ]</p>` },
+    it:{ from:"IT Service Desk", addr:"it-support@company-helpdesk.co", av:"IT", avbg:"#3a3a3a",
+      subj:"Action required: password re-verification",
+      verdict:{lvl:"warn",head:"Credential request · treat as hostile",txt:"A real IT department never asks you to send or confirm your password. The 'helpdesk' domain isn't your company's."},
+      html:`<p>Hello,</p><p><mark data-cat="bel" data-t="il">As part of our scheduled security upgrade</mark>, all employees must re-verify their credentials. <mark data-cat="act" data-t="ur">Failure to complete this by Friday will result in loss of email access.</mark></p><p><mark data-cat="bel" data-t="cr">Please confirm your current password here.</mark></p><p>IT Service Desk</p>` },
+    ok:{ from:"Sarah · People Team", addr:"sarah.k@company.com", av:"SK", avbg:"#1f5c3a",
+      subj:"Team lunch moved to Thursday",
+      verdict:{lvl:"safe",head:"Looks clean",txt:"No pressure tactics found. Specific, low-stakes, no urgency, no request for money or credentials — and from your real company domain."},
+      html:`<p>Hi all,</p><p>Quick note — the team lunch is now Thursday 12:30 in the usual spot. No need to reply, just drop in if you can.</p><p>Sarah</p>` }
+  };
+  const verdictStyle = {
+    danger:{c:"#ff5a52",bg:"rgba(244,67,54,0.09)",b:"rgba(244,67,54,0.25)"},
+    warn:{c:"#ffa733",bg:"rgba(255,152,0,0.09)",b:"rgba(255,152,0,0.25)"},
+    safe:{c:"#63c766",bg:"rgba(76,175,80,0.09)",b:"rgba(76,175,80,0.25)"}
+  };
+
+  const body = document.body;
+  document.getElementById('toggle').addEventListener('click', () => body.classList.toggle('on'));
+
+  // tabs
+  const feedView = document.getElementById('feedView'), inboxView = document.getElementById('inboxView');
+  const tabFeed = document.getElementById('tabFeed'), tabInbox = document.getElementById('tabInbox');
+  const kicker = document.getElementById('kicker');
+  function showFeed(){ feedView.hidden=false; inboxView.hidden=true; tabFeed.classList.add('active'); tabInbox.classList.remove('active'); kicker.textContent="Your feed, decoded"; closeMail(); }
+  function showInbox(){ feedView.hidden=true; inboxView.hidden=false; tabInbox.classList.add('active'); tabFeed.classList.remove('active'); kicker.textContent="Your inbox, screened"; }
+  tabFeed.addEventListener('click', showFeed);
+  tabInbox.addEventListener('click', showInbox);
+
+  // technique sheet
+  const backdrop = document.getElementById('backdrop'), sheet = document.getElementById('sheet');
+  function openTech(key){
+    const t = techniques[key]; if(!t) return;
+    document.getElementById('techNum').textContent = t.num;
+    document.getElementById('techNum').style.color = goalStyle[t.cat].c;
+    document.getElementById('techName').textContent = t.name;
+    document.getElementById('techMech').textContent = t.mech;
+    document.getElementById('techClarity').textContent = t.clarity;
+    const gs = goalStyle[goalColors[t.goal]] || goalStyle.bel;
+    const chip = document.getElementById('goalChip');
+    chip.textContent = t.goal; chip.style.color = gs.c; chip.style.background = gs.bg; chip.style.borderColor = gs.b;
+    backdrop.classList.add('open'); sheet.classList.add('open');
+  }
+  document.body.addEventListener('click', (e)=>{
+    const m = e.target.closest('mark');
+    if(m && body.classList.contains('on')){ openTech(m.dataset.t); }
+  });
+  backdrop.addEventListener('click', ()=>{ backdrop.classList.remove('open'); sheet.classList.remove('open'); });
+
+  // mail detail
+  const mailview = document.getElementById('mailview'), mvBody = document.getElementById('mvBody');
+  function openMail(id){
+    const m = mails[id]; if(!m) return;
+    const vs = verdictStyle[m.verdict.lvl];
+    mvBody.innerHTML =
+      `<div class="mv-subj">${m.subj}</div>
+       <div class="mv-from"><div class="mail-av" style="background:${m.avbg};">${m.av}</div><div><div class="mv-from-name">${m.from}</div><div class="mv-from-addr">${m.addr}</div></div></div>
+       <div class="mv-verdict" style="color:${vs.c};background:${vs.bg};border:1px solid ${vs.b};"><div class="vhead" style="color:${vs.c};">${m.verdict.head}</div><div style="color:var(--muted);">${m.verdict.txt}</div></div>
+       <div class="mv-hint">Tap any highlight below to see the exact technique.</div>
+       <div class="mv-text">${m.html}</div>`;
+    mailview.classList.add('open');
+  }
+  function closeMail(){ mailview.classList.remove('open'); }
+  document.getElementById('mvBack').addEventListener('click', closeMail);
+  document.querySelectorAll('.mail-row').forEach(r=> r.addEventListener('click', ()=> openMail(r.dataset.m)));
+</script>
+</body>
+</html>
