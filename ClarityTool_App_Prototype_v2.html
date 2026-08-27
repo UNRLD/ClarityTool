@@ -155,6 +155,27 @@
     .notch { display: none; }
     .statusbar { padding-top: max(12px, env(safe-area-inset-top)); }
   }
+  /* ---------- Screen (live analysis) view ---------- */
+  .scr-input { width:100%; height:150px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:13px; color:var(--white); font-family:'Archivo',sans-serif; font-weight:300; font-size:14px; line-height:1.6; resize:none; }
+  .scr-input::placeholder { color:var(--dim); }
+  .scr-controls { display:flex; align-items:center; gap:12px; margin-top:12px; }
+  .scr-btn { background:var(--blue); color:#fff; border:0; border-radius:11px; padding:11px 20px; font-family:'Archivo Black',sans-serif; font-size:12px; letter-spacing:0.04em; cursor:pointer; }
+  .scr-btn:disabled { opacity:0.5; }
+  .scr-lang { background:var(--card); color:var(--muted); border:1px solid var(--border); border-radius:10px; padding:9px; font-size:12px; }
+  .scr-out { margin-top:18px; }
+  .scr-score { display:flex; align-items:center; gap:11px; margin-bottom:12px; }
+  .scr-score .chip { font-family:'Archivo Black',sans-serif; font-size:15px; padding:5px 12px; border-radius:9px; flex:none; }
+  .scr-score .vtxt { font-size:12px; line-height:1.4; }
+  .scr-summary { font-size:12.5px; color:var(--muted); line-height:1.6; margin:0 2px 12px; }
+  .scr-text { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:15px 16px; font-size:15px; line-height:1.72; color:#e2e2df; }
+  .scr-list { margin-top:12px; }
+  .live-tech-row { display:flex; align-items:center; gap:9px; padding:11px 12px; background:var(--card); border:1px solid var(--border); border-left-width:3px; border-radius:11px; margin-top:8px; cursor:pointer; }
+  .live-tech-row:active { background:#111; }
+  .live-tech-row .tn { font-size:12.5px; font-weight:600; color:#eaeae8; }
+  .live-tech-row .tq { font-size:11px; color:var(--dim); margin-top:2px; }
+  .scr-loading { font-size:12px; color:var(--dim); }
+  .scr-err { font-size:12.5px; color:var(--danger); }
+
 </style>
 </head>
 <body>
@@ -262,6 +283,17 @@
         </div>
       </div>
 
+      <!-- ============ SCREEN (live) ============ -->
+      <div class="view" id="screenView" hidden>
+        <div class="list-label">Screen your own · live analysis</div>
+        <textarea id="scrInput" class="scr-input" placeholder="Paste an email, a post, a message — any language."></textarea>
+        <div class="scr-controls">
+          <button id="scrBtn" class="scr-btn">Analyze</button>
+          <select id="scrLang" class="scr-lang"><option value="en">English</option><option value="de">Deutsch</option></select>
+        </div>
+        <div id="scrOut" class="scr-out"></div>
+      </div>
+
       <!-- ============ MAIL DETAIL ============ -->
       <div class="mailview" id="mailview">
         <div class="mv-bar"><span class="mv-back" id="mvBack">‹</span><span class="mv-bar-title">Message</span></div>
@@ -285,6 +317,7 @@
     <div class="tabbar">
       <div class="tab active" id="tabFeed"><div class="tab-ico">◎</div><div class="tab-txt">Feed</div></div>
       <div class="tab" id="tabInbox"><div class="tab-ico">✉</div><div class="tab-txt">Inbox</div></div>
+      <div class="tab" id="tabScreen"><div class="tab-ico">⌕</div><div class="tab-txt">Screen</div></div>
     </div>
 
     <!-- technique sheet -->
@@ -366,10 +399,14 @@
   const feedView = document.getElementById('feedView'), inboxView = document.getElementById('inboxView');
   const tabFeed = document.getElementById('tabFeed'), tabInbox = document.getElementById('tabInbox');
   const kicker = document.getElementById('kicker');
-  function showFeed(){ feedView.hidden=false; inboxView.hidden=true; tabFeed.classList.add('active'); tabInbox.classList.remove('active'); kicker.textContent="Your feed, decoded"; closeMail(); }
-  function showInbox(){ feedView.hidden=true; inboxView.hidden=false; tabInbox.classList.add('active'); tabFeed.classList.remove('active'); kicker.textContent="Your inbox, screened"; }
+  const screenView = document.getElementById('screenView'), tabScreen = document.getElementById('tabScreen');
+  function setActive(tab){ [tabFeed,tabInbox,tabScreen].forEach(t=>t.classList.remove('active')); tab.classList.add('active'); }
+  function showFeed(){ feedView.hidden=false; inboxView.hidden=true; screenView.hidden=true; setActive(tabFeed); kicker.textContent="Your feed, decoded"; closeMail(); }
+  function showInbox(){ feedView.hidden=true; inboxView.hidden=false; screenView.hidden=true; setActive(tabInbox); kicker.textContent="Your inbox, screened"; closeMail(); }
+  function showScreen(){ feedView.hidden=true; inboxView.hidden=true; screenView.hidden=false; setActive(tabScreen); kicker.textContent="Screen your own"; closeMail(); }
   tabFeed.addEventListener('click', showFeed);
   tabInbox.addEventListener('click', showInbox);
+  tabScreen.addEventListener('click', showScreen);
 
   // technique sheet
   const backdrop = document.getElementById('backdrop'), sheet = document.getElementById('sheet');
@@ -407,6 +444,64 @@
   function closeMail(){ mailview.classList.remove('open'); }
   document.getElementById('mvBack').addEventListener('click', closeMail);
   document.querySelectorAll('.mail-row').forEach(r=> r.addEventListener('click', ()=> openMail(r.dataset.m)));
+
+  // ---------- Live analysis (Screen tab) ----------
+  const WORKER_URL = "https://claritytool-api.martinez-joseph1981.workers.dev";
+  const catMap = { emotion:'emo', action:'act', belief:'bel', identity:'id', silence:'sil' };
+  const goalFromCat = { emo:'EMO', act:'ACT', bel:'BEL', id:'ID', sil:'SIL' };
+  function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function scoreColor(s){ if(s==null) return '#8a8a8a'; if(s<=30) return '#63c766'; if(s<=65) return '#ffa733'; return '#ff5a52'; }
+  function hexA(hex,a){ const h=hex.replace('#',''); const r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), bch=parseInt(h.substr(4,2),16); return 'rgba('+r+','+g+','+bch+','+a+')'; }
+
+  const scrBtn=document.getElementById('scrBtn'), scrInput=document.getElementById('scrInput'), scrLang=document.getElementById('scrLang'), scrOut=document.getElementById('scrOut');
+  let liveCount=0;
+  scrBtn.addEventListener('click', analyze);
+  async function analyze(){
+    const text=scrInput.value.trim();
+    if(!text){ scrOut.innerHTML='<div class="scr-err">Please paste some text first.</div>'; return; }
+    scrBtn.disabled=true; scrOut.innerHTML='<div class="scr-loading">Analyzing\u2026</div>';
+    try{
+      const r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,lang:scrLang.value})});
+      const d=await r.json();
+      scrBtn.disabled=false;
+      if(d.error){ scrOut.innerHTML='<div class="scr-err">Error: '+escapeHtml(d.error)+'</div>'; return; }
+      renderLive(text,d);
+    }catch(e){ scrBtn.disabled=false; scrOut.innerHTML='<div class="scr-err">Network error: '+escapeHtml(String(e))+'</div>'; }
+  }
+  function renderLive(text,d){
+    body.classList.add('on'); // lens on so highlights + technique sheet work
+    const techs=(d.techniques||[]);
+    let marked=escapeHtml(text);
+    const rows=[];
+    techs.forEach((t,i)=>{
+      const cat=catMap[(t.category||'').toLowerCase()]||'emo';
+      const key='live'+(liveCount++);
+      techniques[key]={ num:'#'+(i+1), name:t.name||'Technique', goal:goalFromCat[cat], cat:cat, mech:t.explanation||'', clarity:t.clarity||'' };
+      const q=(t.quote||'').trim();
+      if(q){
+        const eq=escapeHtml(q);
+        const idx=marked.toLowerCase().indexOf(eq.toLowerCase());
+        if(idx>=0){
+          marked = marked.slice(0,idx) + '<mark data-cat="'+cat+'" data-t="'+key+'">' + marked.slice(idx, idx+eq.length) + '</mark>' + marked.slice(idx+eq.length);
+        }
+      }
+      rows.push({ key:key, cat:cat, name:t.name||'Technique', quote:t.quote||'' });
+    });
+    const sc = (d.score!=null) ? Math.round(d.score/10) : null;
+    const col = scoreColor(d.score);
+    let out = '<div class="scr-score"><span class="chip" style="background:'+hexA(col,0.15)+';color:'+col+';">'+(sc!=null? sc+' / 10':'')+'</span><span class="vtxt" style="color:'+col+';font-weight:600;">'+escapeHtml(d.verdict||'')+'</span></div>';
+    if(d.summary){ out += '<div class="scr-summary">'+escapeHtml(d.summary)+'</div>'; }
+    out += '<div class="scr-text">'+marked+'</div>';
+    if(rows.length){
+      out += '<div class="scr-list">';
+      rows.forEach(r=>{ const c=goalStyle[r.cat].c; out += '<div class="live-tech-row" data-t="'+r.key+'" style="border-left-color:'+c+';"><div><div class="tn">'+escapeHtml(r.name)+'</div><div class="tq">\u201c'+escapeHtml(r.quote)+'\u201d</div></div></div>'; });
+      out += '</div>';
+    } else {
+      out += '<div class="scr-summary">No manipulation techniques detected.</div>';
+    }
+    scrOut.innerHTML = out;
+    scrOut.querySelectorAll('.live-tech-row').forEach(el=> el.addEventListener('click', ()=> openTech(el.dataset.t)));
+  }
 </script>
 </body>
 </html>
