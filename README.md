@@ -1,52 +1,26 @@
 # ClarityTool — Concept Demo
 
-**Real-time manipulation detection. 90 documented techniques.**
+**A real-time manipulation-awareness layer. It names the technique — not the verdict.**
 
-> “Not *is this fake?* — but *how is this trying to influence me, and why does it work?*”
+> "Not *is this fake?* — but *how is this trying to influence me, and why does it work?*"
 
 ## What this is
 
-A working concept demo for ClarityTool — a browser extension and mobile app that functions as a real-time manipulation awareness layer.
+A working concept demo for ClarityTool — a manipulation-awareness layer for the channels where influence actually reaches people.
 
-Paste any headline, email, political statement, or ad copy. The tool identifies which psychological techniques are being used, explains the mechanism in plain language, and assigns a manipulation score.
+Paste a headline, email, post or ad. The tool identifies which psychological techniques are at work, explains each mechanism in plain language, and assigns a manipulation score.
 
-ClarityTool never judges whether content is true or false. It only names the technique. The user decides.
+ClarityTool never judges whether content is true or false. It only names the technique. The reader decides.
 
-## How to deploy (GitHub Pages)
+## Approach
 
-1. Fork or clone this repository
-1. Go to **Settings → Pages**
-1. Under *Source*, select **Deploy from a branch**
-1. Select branch: `main`, folder: `/ (root)`
-1. Click **Save**
+- A proprietary database of documented manipulation techniques, organised into a multi-category taxonomy.
+- Grounded in established persuasion and influence research (e.g. Bernays, Cialdini, peer-reviewed work).
+- Live analysis runs through a secure server-side backend that keeps all credentials private — nothing sensitive is exposed in the browser.
 
-Your demo will be live at:
-`https://yourusername.github.io/claritytool/`
+## Status
 
-That’s it. No build step. No dependencies. Pure HTML.
-
-## Technique database
-
-90 documented manipulation techniques across 8 categories:
-
-|Category                    |Techniques|
-|----------------------------|----------|
-|1. Emotional Triggers       |#1–#16    |
-|2. Cognitive Biases         |#17–#30   |
-|3. Authority & Trust Signals|#31–#41   |
-|4. Social Mechanisms        |#42–#54   |
-|5. Framing & Language       |#55–#69   |
-|6. Information Manipulation |#70–#81   |
-|7. Behavioral Triggers      |#82–#89   |
-|8. Discourse Suppression    |#90       |
-
-Academic basis: Bernays (1923), Cialdini, peer-reviewed research, PSYOP doctrine.
-
-## Tech
-
-- Single HTML file — zero dependencies, zero build tooling
-- Uses Claude API (claude-sonnet-4) for real-time analysis
-- API key handled server-side by Claude.ai infrastructure
+Concept in development. This demo shows the interaction model. The scoring methodology and the full technique database are proprietary and are **not** part of this repository.
 
 ## Contact
 
@@ -54,4 +28,4 @@ UNRLD. Studio · [joey@unrld.de](mailto:joey@unrld.de)
 
 -----
 
-*ClarityTool is a concept in development. June 2026.*
+*ClarityTool is a concept in development. 2026.*
